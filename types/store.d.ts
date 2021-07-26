@@ -35,9 +35,11 @@ export interface UserInfo {
   username: string;
   realName: string;
   avatar: string;
+  nickName?: string;
   desc?: string;
   homePath?: string;
   roles: RoleInfo[];
+  permissions: Array<string>;
 }
 
 export interface BeforeMiniState {

@@ -1,7 +1,13 @@
 <template>
   <template v-if="getShow">
     <LoginFormTitle class="enter-x" />
-    <Form class="p-4 enter-x" :model="formData" :rules="getFormRules" ref="formRef">
+    <Form
+      layout="horizontal"
+      class="p-4 enter-x"
+      :model="formData"
+      :rules="getFormRules"
+      ref="formRef"
+    >
       <FormItem name="mobile" class="enter-x">
         <Input size="large" v-model:value="formData.mobile" :placeholder="t('sys.login.mobile')" />
       </FormItem>

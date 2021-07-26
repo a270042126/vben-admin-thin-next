@@ -10,6 +10,8 @@ export interface RequestOptions {
   // Whether to return native response headers
   // For example: use this attribute when you need to get the response headers
   isReturnNativeResponse?: boolean;
+  // data
+  isNotData?: boolean;
   // Whether to join url
   joinPrefix?: boolean;
   // Interface address, use the default apiUrl if you leave it blank
@@ -26,8 +28,10 @@ export interface RequestOptions {
 export interface Result<T = any> {
   code: number;
   type: 'success' | 'error' | 'warning';
-  message: string;
-  result: T;
+  msg: string;
+  data: T;
+  rows: T;
+  total: number;
 }
 
 // multipart/form-data: upload file

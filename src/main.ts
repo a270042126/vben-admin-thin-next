@@ -1,5 +1,6 @@
 import '/@/design/index.less';
 import '/@/design/tailwind.css';
+import '/@/styles/index.less';
 // Register icon sprite
 import 'virtual:svg-icons-register';
 import App from './App.vue';

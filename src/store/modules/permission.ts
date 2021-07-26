@@ -14,12 +14,12 @@ import projectSetting from '/@/settings/projectSetting';
 import { PermissionModeEnum } from '/@/enums/appEnum';
 
 import { asyncRoutes } from '/@/router/routes';
-import { ERROR_LOG_ROUTE, PAGE_NOT_FOUND_ROUTE } from '/@/router/routes/basic';
+import { ERROR_LOG_ROUTE } from '/@/router/routes/basic';
 
 import { filter } from '/@/utils/helper/treeHelper';
 
 import { getMenuList } from '/@/api/sys/menu';
-import { getPermCode } from '/@/api/sys/user';
+// import { getPermCode } from '/@/api/sys/user';
 
 import { useMessage } from '/@/hooks/web/useMessage';
 import { PageEnum } from '/@/enums/pageEnum';
@@ -92,8 +92,10 @@ export const usePermissionStore = defineStore({
       this.backMenuList = [];
       this.lastBuildMenuTime = 0;
     },
-    async changePermissionCode() {
-      const codeList = await getPermCode();
+    changePermissionCode() {
+      // const codeList = await getPermCode();
+      const userStore = useUserStore();
+      const codeList = userStore.getRoleList;
       this.setPermCodeList(codeList);
     },
     async buildRoutesAction(): Promise<AppRouteRecordRaw[]> {
@@ -185,24 +187,25 @@ export const usePermissionStore = defineStore({
           let routeList: AppRouteRecordRaw[] = [];
           try {
             this.changePermissionCode();
-            routeList = (await getMenuList()) as AppRouteRecordRaw[];
+            const res = await getMenuList();
+            routeList = res as AppRouteRecordRaw[];
           } catch (error) {
             console.error(error);
           }
-
           // Dynamically introduce components
           routeList = transformObjToRoute(routeList);
-
+          routes = filter(asyncRoutes, routeFilter);
+          routes = routes.concat(routeList);
           //  Background routing to menu structure
-          const backMenuList = transformRouteToMenu(routeList);
+          const backMenuList = transformRouteToMenu(routes);
           this.setBackMenuList(backMenuList);
 
           // remove meta.ignoreRoute item
-          routeList = filter(routeList, routeRmoveIgnoreFilter);
-          routeList = routeList.filter(routeRmoveIgnoreFilter);
+          routes = filter(routes, routeRmoveIgnoreFilter);
+          routes = routes.filter(routeRmoveIgnoreFilter);
 
-          routeList = flatMultiLevelRoutes(routeList);
-          routes = [PAGE_NOT_FOUND_ROUTE, ...routeList];
+          routes = flatMultiLevelRoutes(routes);
+          // routes = [PAGE_NOT_FOUND_ROUTE, ...routeList];
           break;
       }
 

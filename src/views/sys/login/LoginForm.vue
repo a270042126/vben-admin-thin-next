@@ -130,8 +130,8 @@
       const rememberMe = ref(false);
 
       const formData = reactive({
-        account: 'vben',
-        password: '123456',
+        account: 'admin',
+        password: 'admin123',
       });
 
       const { validForm } = useFormValid(formRef);
@@ -155,7 +155,7 @@
           if (userInfo) {
             notification.success({
               message: t('sys.login.loginSuccessTitle'),
-              description: `${t('sys.login.loginSuccessDesc')}: ${userInfo.realName}`,
+              description: `${t('sys.login.loginSuccessDesc')}: ${userInfo.nickName}`,
               duration: 3,
             });
           }
