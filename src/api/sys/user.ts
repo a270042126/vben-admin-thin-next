@@ -1,6 +1,5 @@
 import { defHttp } from '/@/utils/http/axios';
 import { LoginParams, LoginResultModel, GetUserInfoModel, UserListModel } from './model/userModel';
-
 import { ErrorMessageMode } from '/#/axios';
 
 enum Api {
@@ -42,6 +41,6 @@ export function doLogout() {
   return defHttp.get({ url: Api.Logout });
 }
 
-export function getUserList(params) {
-  return defHttp.get<UserListModel>({ url: Api.GetUserList }, params);
+export function getUserList(params: Recordable) {
+  return defHttp.get<UserListModel>({ url: Api.GetUserList, params });
 }

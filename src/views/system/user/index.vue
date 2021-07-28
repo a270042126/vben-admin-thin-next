@@ -20,7 +20,7 @@
         </template>
       </Tree>
     </card>
-    <card class="flex-1">
+    <card class="main">
       <Form
         :model="queryParams"
         ref="formRef"
@@ -29,51 +29,77 @@
         class="flex flex-wrap"
       >
         <FormItem label="用户名" name="username">
-          <Input v-model:value="queryParams.username" placeholder="用户名" />
+          <Input v-model:value="queryParams.userName" placeholder="用户名" />
         </FormItem>
         <FormItem label="手机号码" name="phoneNumber">
-          <Input v-model:value="queryParams.phoneNumber" placeholder="手机号码" />
+          <Input v-model:value="queryParams.phonenumber" placeholder="手机号码" />
         </FormItem>
         <a-button type="primary" class="ml-4" @click="search">搜索</a-button>
       </Form>
-      <Table
+      <div class="flex mb-4 mt-2">
+        <a-button type="primary" class="mr-4" @click="handleEdit()">
+          <Icon icon="ant-design:file-add-outlined" />添加用户</a-button
+        >
+        <a-button type="primary" danger>删除</a-button>
+      </div>
+      <BasicTable
         :dataSource="dataList"
         :columns="columns"
         :pagination="{
           pageSize: queryParams.pageSize,
           total: total,
           onChange: handlePageNumChange,
+          onShowSizeChange: handlePageSizeChange,
         }"
+        :bordered="true"
         :scroll="{
-          x: true,
           y: 495,
         }"
         style="width: 100%"
         rowKey="userId"
-      />
+      >
+        <template #action="{ record }">
+          <TableAction
+            :actions="[
+              {
+                label: '编辑',
+                icon: 'ant-design:edit-filled',
+                onClick: handleEdit.bind(null, record),
+              },
+              {
+                label: '删除',
+                icon: 'ic:outline-delete-outline',
+                onClick: handleDelete.bind(null, record),
+              },
+            ]"
+          />
+        </template>
+      </BasicTable>
     </card>
+    <AuData @register="register" />
   </PageWrapper>
 </template>
 
 <script lang="ts">
   import { defineComponent, reactive, toRefs, watch, computed } from 'vue';
   import { PageWrapper } from '/@/components/Page';
-  import { Form, Input, Card, InputSearch, Tree, Table } from 'ant-design-vue';
+  import { BasicTable, TableAction } from '/@/components/Table';
+  import { Icon } from '/@/components/Icon';
+  import { Form, Input, Card, InputSearch, Tree } from 'ant-design-vue';
   import { getDepartTree } from '/@/api/sys/dept';
   import { departModel } from '/@/api/sys/model/departModel';
   import { getUserList } from '/@/api/sys/user';
   import { UserModel } from '/@/api/sys/model/userModel';
-  import { BasicPageParams } from '/@/api/model/baseModel';
+  import { BasicData } from '/@/api/model/baseModel';
+  import { useList } from '/@/hooks/component/useList';
+  import AuData from './components/AuData.vue';
+  import { useModal } from '/@/components/Modal';
 
-  interface DataModel {
+  interface DataModel extends BasicData<UserModel> {
     expandedKeys: Number[];
     departTree: departModel[];
     searchDepart: string;
-    queryParams: BasicPageParams;
     autoExpandParent: boolean;
-    dataList: UserModel[];
-    total: Number;
-    columns: Record<string, any>;
   }
 
   export default defineComponent({
@@ -85,17 +111,17 @@
       Card,
       InputSearch,
       Tree,
-      Table,
+      BasicTable,
+      Icon,
+      AuData,
+      TableAction,
     },
     setup() {
       const data = reactive<DataModel>({
         expandedKeys: [],
         departTree: [],
         searchDepart: '',
-        queryParams: {
-          pageNum: 0,
-          pageSize: 10,
-        },
+        queryParams: {},
         autoExpandParent: false,
         dataList: [],
         total: 0,
@@ -105,6 +131,7 @@
           { title: '部门', dataIndex: 'dept.deptName', width: 110 },
           { title: '手机号', dataIndex: 'phonenumber', width: 130 },
           { title: '创建时间', dataIndex: 'createTime', width: 200 },
+          { title: '操作', slots: { customRender: 'action' }, width: 160 },
         ],
       });
 
@@ -209,16 +236,19 @@
         });
       };
 
-      const search = () => {
-        data.queryParams.pageNum = 0;
-        getList();
-      };
+      const { search, handlePageNumChange, handlePageSizeChange } = useList(
+        getList,
+        data.queryParams
+      );
       search();
 
-      const handlePageNumChange = (pageNum: Number) => {
-        data.queryParams.pageNum = pageNum;
-        getList();
+      const [register, { openModal }] = useModal();
+
+      const handleEdit = (row: UserModel) => {
+        openModal(true, row);
       };
+
+      const handleDelete = () => {};
 
       return {
         ...toRefs(data),
@@ -226,6 +256,11 @@
         getList,
         search,
         handlePageNumChange,
+        handlePageSizeChange,
+        handleEdit,
+        handleDelete,
+        register,
+        openModal,
       };
     },
   });
@@ -235,5 +270,11 @@
   .dep-tree {
     min-height: 400px;
     min-width: 300px;
+  }
+
+  .main {
+    flex: auto;
+    min-width: 0;
+    padding: 40px 0;
   }
 </style>
