@@ -1,5 +1,5 @@
 import { defHttp } from '/@/utils/http/axios';
-import { LoginParams, LoginResultModel, GetUserInfoModel } from './model/userModel';
+import { LoginParams, LoginResultModel, GetUserInfoModel, UserListModel } from './model/userModel';
 
 import { ErrorMessageMode } from '/#/axios';
 
@@ -8,6 +8,7 @@ enum Api {
   Logout = '/logout',
   GetUserInfo = '/getInfo',
   GetPermCode = '/getPermCode',
+  GetUserList = '/system/user/list',
 }
 
 /**
@@ -39,4 +40,8 @@ export function getPermCode() {
 
 export function doLogout() {
   return defHttp.get({ url: Api.Logout });
+}
+
+export function getUserList(params) {
+  return defHttp.get<UserListModel>({ url: Api.GetUserList }, params);
 }

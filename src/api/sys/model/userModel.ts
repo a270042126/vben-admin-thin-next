@@ -1,4 +1,5 @@
 import type { UserInfo } from '/#/store';
+import type { BasicFetchResult } from '/@/api/model/baseModel';
 /**
  * @description: Login interface parameters
  */
@@ -30,3 +31,22 @@ export interface GetUserInfoModel {
   permissions: Array<string>;
   user: UserInfo;
 }
+
+export interface UserModel {
+  userId: number;
+  departId: number;
+  userName: string;
+  nickName: string;
+  email: string;
+  phonenumber: string;
+  sex: string;
+  avatar: string;
+  enable: boolean;
+  status: string;
+  delFlag: string;
+  loginIp: string;
+  createTime: string;
+  roleIds?: String[];
+}
+
+export type UserListModel = BasicFetchResult<UserModel>;

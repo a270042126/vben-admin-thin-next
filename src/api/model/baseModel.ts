@@ -1,9 +1,12 @@
 export interface BasicPageParams {
-  page: number;
-  pageSize: number;
+  pageNum: Number;
+  pageSize: Number;
+  orderByColumn?: string;
+  isAsc?: string;
+  params?: Record<string, any>;
 }
 
 export interface BasicFetchResult<T extends any> {
-  items: T[];
-  total: number;
+  rows: T[];
+  total: Number;
 }

@@ -1,34 +1,56 @@
 <template>
-  <PageWrapper contentClass="flex">
+  <PageWrapper contentClass="flex items-start">
     <!-- <template #headerContent> </template> -->
-    <card style="margin-right: 20px">
-      <InputSearch
-        v-model:value="searchDepart"
-        placeholder="请搜索部门"
-        style="margin-bottom: 8px"
-      />
+    <card class="!mr-4 dep-tree">
+      <InputSearch v-model:value="searchDepart" placeholder="请搜索部门" />
       <Tree
+        class="!mt-4"
         :expandedKeys="expandedKeys"
         :tree-data="departTree"
         :replaceFields="{ children: 'children', title: 'label', key: 'id' }"
         @expand="onExpand"
-      />
+      >
+        <template #title="{ label }">
+          <span v-if="label && label.indexOf(searchDepart) > -1">
+            {{ label.substr(0, label.indexOf(searchDepart)) }}
+            <span style="color: #f50">{{ searchDepart }}</span>
+            {{ label.substr(label.indexOf(searchDepart) + searchDepart.length) }}
+          </span>
+          <span v-else>{{ label }}</span>
+        </template>
+      </Tree>
     </card>
-    <card>
+    <card class="flex-1">
       <Form
-        :model="formData"
+        :model="queryParams"
         ref="formRef"
         layout="horizontal"
         :label-col="{ span: 10 }"
-        class="flex"
+        class="flex flex-wrap"
       >
         <FormItem label="用户名" name="username">
-          <Input v-model:value="formData.username" placeholder="用户名" />
+          <Input v-model:value="queryParams.username" placeholder="用户名" />
         </FormItem>
-        <FormItem label="用户名" name="phoneNumber">
-          <Input v-model:value="formData.phoneNumber" placeholder="用户名" />
+        <FormItem label="手机号码" name="phoneNumber">
+          <Input v-model:value="queryParams.phoneNumber" placeholder="手机号码" />
         </FormItem>
+        <a-button type="primary" class="ml-4" @click="search">搜索</a-button>
       </Form>
+      <Table
+        :dataSource="dataList"
+        :columns="columns"
+        :pagination="{
+          pageSize: queryParams.pageSize,
+          total: total,
+          onChange: handlePageNumChange,
+        }"
+        :scroll="{
+          x: true,
+          y: 495,
+        }"
+        style="width: 100%"
+        rowKey="userId"
+      />
     </card>
   </PageWrapper>
 </template>
@@ -36,16 +58,22 @@
 <script lang="ts">
   import { defineComponent, reactive, toRefs, watch, computed } from 'vue';
   import { PageWrapper } from '/@/components/Page';
-  import { Form, Input, Card, InputSearch, Tree } from 'ant-design-vue';
+  import { Form, Input, Card, InputSearch, Tree, Table } from 'ant-design-vue';
   import { getDepartTree } from '/@/api/sys/dept';
   import { departModel } from '/@/api/sys/model/departModel';
+  import { getUserList } from '/@/api/sys/user';
+  import { UserModel } from '/@/api/sys/model/userModel';
+  import { BasicPageParams } from '/@/api/model/baseModel';
 
   interface DataModel {
     expandedKeys: Number[];
     departTree: departModel[];
     searchDepart: string;
-    formData: Object;
+    queryParams: BasicPageParams;
     autoExpandParent: boolean;
+    dataList: UserModel[];
+    total: Number;
+    columns: Record<string, any>;
   }
 
   export default defineComponent({
@@ -57,16 +85,30 @@
       Card,
       InputSearch,
       Tree,
+      Table,
     },
     setup() {
       const data = reactive<DataModel>({
         expandedKeys: [],
         departTree: [],
         searchDepart: '',
-        formData: {},
+        queryParams: {
+          pageNum: 0,
+          pageSize: 10,
+        },
         autoExpandParent: false,
+        dataList: [],
+        total: 0,
+        columns: [
+          { title: '用户名', dataIndex: 'userName', width: 110 },
+          { title: '用户昵称', dataIndex: 'nickName', width: 110 },
+          { title: '部门', dataIndex: 'dept.deptName', width: 110 },
+          { title: '手机号', dataIndex: 'phonenumber', width: 130 },
+          { title: '创建时间', dataIndex: 'createTime', width: 200 },
+        ],
       });
 
+      //  部门
       const searchDepart = computed<string>(() => {
         return data.searchDepart;
       });
@@ -158,10 +200,40 @@
       getDepartTree().then((res) => {
         data.departTree = res;
       });
+
+      // 用户
+      const getList = () => {
+        getUserList(data.queryParams).then((res) => {
+          data.dataList = res.rows;
+          data.total = res.total;
+        });
+      };
+
+      const search = () => {
+        data.queryParams.pageNum = 0;
+        getList();
+      };
+      search();
+
+      const handlePageNumChange = (pageNum: Number) => {
+        data.queryParams.pageNum = pageNum;
+        getList();
+      };
+
       return {
         ...toRefs(data),
         onExpand,
+        getList,
+        search,
+        handlePageNumChange,
       };
     },
   });
 </script>
+
+<style lang="less" scoped>
+  .dep-tree {
+    min-height: 400px;
+    min-width: 300px;
+  }
+</style>

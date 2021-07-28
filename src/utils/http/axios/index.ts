@@ -48,11 +48,10 @@ const transform: AxiosTransform = {
         return res.data;
       } else {
         if (res.data.rows) {
-          res.data.data = res.data.rows;
-          res.data.data.total = res.data.total;
-          delete res.data.rows;
+          return res.data;
+        } else {
+          return res.data.data;
         }
-        return res.data.data;
       }
     }
     // 在此处根据自己项目的实际情况对不同的code执行不同的操作
