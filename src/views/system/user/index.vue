@@ -8,6 +8,7 @@
         :expandedKeys="expandedKeys"
         :tree-data="departTree"
         :replaceFields="{ children: 'children', title: 'label', key: 'id' }"
+        :onSelect="onSelectTree"
         @expand="onExpand"
       >
         <template #title="{ label }">
@@ -40,7 +41,9 @@
         <a-button type="primary" class="mr-4" @click="handleEdit()">
           <Icon icon="ant-design:file-add-outlined" />添加用户</a-button
         >
-        <a-button type="primary" danger>删除</a-button>
+        <Popconfirm title="您确定删除吗" :onConfirm="handleDelete">
+          <a-button type="primary" danger>删除</a-button>
+        </Popconfirm>
       </div>
       <BasicTable
         :dataSource="dataList"
@@ -55,25 +58,22 @@
         :scroll="{
           y: 495,
         }"
+        rowKey="userId"
+        :rowSelection="{ type: 'checkbox', preserveSelectedRowKeys: false, onChange: onSelected }"
         :loading="loading"
         style="width: 100%"
-        rowKey="userId"
       >
         <template #action="{ record }">
-          <TableAction
-            :actions="[
-              {
-                label: '编辑',
-                icon: 'ant-design:edit-filled',
-                onClick: handleEdit.bind(null, record),
-              },
-              {
-                label: '删除',
-                icon: 'ic:outline-delete-outline',
-                onClick: handleDelete.bind(null, record),
-              },
-            ]"
-          />
+          <div>
+            <a-button type="link" style="padding: 0 5px" @click="handleEdit(record)"
+              ><Icon icon="ant-design:edit-filled" />编辑</a-button
+            >
+            <Popconfirm title="您确定删除吗" :onConfirm="handleDelete">
+              <a-button type="link" danger style="padding: 0 5px" @click="handleDelete(record)"
+                ><Icon icon="ic:outline-delete-outline" />删除</a-button
+              >
+            </Popconfirm>
+          </div>
         </template>
       </BasicTable>
     </card>
@@ -84,23 +84,28 @@
 <script lang="ts">
   import { defineComponent, reactive, toRefs, watch, computed } from 'vue';
   import { PageWrapper } from '/@/components/Page';
-  import { BasicTable, TableAction } from '/@/components/Table';
+  import { BasicTable } from '/@/components/Table';
   import { Icon } from '/@/components/Icon';
-  import { Form, Input, Card, InputSearch, Tree } from 'ant-design-vue';
+  import { Form, Input, Card, InputSearch, Tree, Popconfirm } from 'ant-design-vue';
   import { DepartTreeModel } from '/@/api/sys/model/departModel';
   import { useDepartStore } from '/@/store/modules/system/depart';
-  import { getUserList } from '/@/api/sys/user';
+  import { getUserList, deleteUser } from '/@/api/sys/user';
   import { UserModel } from '/@/api/sys/model/userModel';
-  import { BasicData } from '/@/api/model/baseModel';
+  import { BasicData, BasicParams } from '/@/api/model/baseModel';
   import { useList } from '/@/hooks/component/useList';
   import AuData from './components/AuData.vue';
   import { useModal } from '/@/components/Modal';
   import { BasicColumn } from '/@/components/Table/index';
+  import { useMessage } from '/@/hooks/web/useMessage';
+
+  interface ParamsModel extends BasicParams, UserModel {}
 
   interface DataModel extends BasicData<UserModel> {
     expandedKeys: number[];
     searchDepart: string;
     autoExpandParent: boolean;
+    queryParams: ParamsModel;
+    selectList: number[];
   }
 
   const columns: BasicColumn[] = [
@@ -109,7 +114,7 @@
     { title: '部门', dataIndex: 'dept.deptName', width: 110 },
     { title: '手机号', dataIndex: 'phonenumber', width: 130 },
     { title: '创建时间', dataIndex: 'createTime', width: 200 },
-    { title: '操作', slots: { customRender: 'action' }, width: 160 },
+    { title: '操作', slots: { customRender: 'action' }, width: 170 },
   ];
 
   export default defineComponent({
@@ -124,7 +129,7 @@
       BasicTable,
       Icon,
       AuData,
-      TableAction,
+      Popconfirm,
     },
     setup() {
       const myData = reactive<DataModel>({
@@ -134,6 +139,7 @@
         autoExpandParent: false,
         dataList: [],
         total: 0,
+        selectList: [],
       });
 
       const departStore = useDepartStore();
@@ -252,6 +258,11 @@
       );
       search();
 
+      const onSelectTree = (keys: number[]) => {
+        myData.queryParams.deptId = keys[0];
+        search();
+      };
+
       const [register, { openModal: openModal, setModalProps }] = useModal();
 
       const handleEdit = (row: UserModel) => {
@@ -264,9 +275,31 @@
         openModal(true, row);
       };
 
-      const handleDelete = () => {};
+      const { notification } = useMessage();
+      const handleDelete = (row: UserModel) => {
+        const userIds = row.userId || myData.selectList;
+        myData.loading = true;
+        deleteUser(userIds)
+          .then(() => {
+            notification.success({
+              message: '删除成功',
+              duration: 3,
+            });
+            getList();
+          })
+          .catch(() => {
+            myData.loading = false;
+          });
+      };
+
+      const onSelected = (keys: number[]) => {
+        myData.selectList = keys;
+        console.log(myData.selectList);
+      };
 
       return {
+        onSelected,
+        onSelectTree,
         departTree,
         columns,
         ...toRefs(myData),

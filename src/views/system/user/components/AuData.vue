@@ -184,24 +184,41 @@
       const { notification } = useMessage();
 
       const onSubmit = async () => {
-        changeLoading(true);
         const data = await formRef.value.validateFields();
         if (!data) {
           return;
         }
+        changeLoading(true);
         const form = myData.form;
         if (form.userId) {
-          await updateUser(form);
+          updateUser(form)
+            .then(() => {
+              changeLoading(false);
+              notification.success({
+                message: '更新成功',
+                duration: 3,
+              });
+              context.emit('onRefresh');
+              closeModal();
+            })
+            .catch(() => {
+              changeLoading(false);
+            });
         } else {
-          await addUser(form);
+          addUser(form)
+            .then(() => {
+              changeLoading(false);
+              notification.success({
+                message: '添加成功',
+                duration: 3,
+              });
+              context.emit('onRefresh');
+              closeModal();
+            })
+            .catch(() => {
+              changeLoading(false);
+            });
         }
-        changeLoading(false);
-        notification.success({
-          message: '操作成功',
-          duration: 3,
-        });
-        context.emit('onRefresh');
-        closeModal();
       };
 
       return {

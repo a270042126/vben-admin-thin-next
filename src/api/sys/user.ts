@@ -15,9 +15,7 @@ enum Api {
   GetUserInfo = '/getInfo',
   GetPermCode = '/getPermCode',
   GetUserList = '/system/user/list',
-  GetUser = '/system/user/',
-  AddUser = '/system/user/',
-  UpdateUser = '/system/user/',
+  User = '/system/user/',
 }
 
 /**
@@ -56,14 +54,18 @@ export function getUserList(params: Recordable) {
 }
 
 export function getUser(id: number | null) {
-  const url = id ? `${Api.GetUser}${id}` : Api.GetUser;
+  const url = id ? `${Api.User}${id}` : Api.User;
   return defHttp.get<UserDepRoleModel>({ url: url }, { isNotData: true });
 }
 
 export function addUser(data: UserModel) {
-  return defHttp.post({ url: Api.AddUser, data });
+  return defHttp.post({ url: Api.User, data });
 }
 
 export function updateUser(data: UserModel) {
-  return defHttp.put({ url: Api.UpdateUser, data });
+  return defHttp.put({ url: Api.User, data });
+}
+
+export function deleteUser(data: number | number[]) {
+  return defHttp.delete({ url: `${Api.User}${data}` });
 }
