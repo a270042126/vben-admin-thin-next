@@ -44,14 +44,10 @@ const transform: AxiosTransform = {
     // 这里逻辑可以根据项目进行修改
     const hasSuccess = Reflect.has(res.data, 'code') && code === ResultEnum.SUCCESS;
     if (hasSuccess) {
-      if (isNotData) {
+      if (isNotData || res.data.rows) {
         return res.data;
       } else {
-        if (res.data.rows) {
-          return res.data;
-        } else {
-          return res.data.data;
-        }
+        return res.data.data;
       }
     }
     // 在此处根据自己项目的实际情况对不同的code执行不同的操作

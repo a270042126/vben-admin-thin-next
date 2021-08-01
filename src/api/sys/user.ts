@@ -1,5 +1,12 @@
 import { defHttp } from '/@/utils/http/axios';
-import { LoginParams, LoginResultModel, GetUserInfoModel, UserListModel } from './model/userModel';
+import {
+  LoginParams,
+  LoginResultModel,
+  GetUserInfoModel,
+  UserListModel,
+  UserDepRoleModel,
+  UserModel,
+} from './model/userModel';
 import { ErrorMessageMode } from '/#/axios';
 
 enum Api {
@@ -8,6 +15,9 @@ enum Api {
   GetUserInfo = '/getInfo',
   GetPermCode = '/getPermCode',
   GetUserList = '/system/user/list',
+  GetUser = '/system/user/',
+  AddUser = '/system/user/',
+  UpdateUser = '/system/user/',
 }
 
 /**
@@ -43,4 +53,17 @@ export function doLogout() {
 
 export function getUserList(params: Recordable) {
   return defHttp.get<UserListModel>({ url: Api.GetUserList, params });
+}
+
+export function getUser(id: number | null) {
+  const url = id ? `${Api.GetUser}${id}` : Api.GetUser;
+  return defHttp.get<UserDepRoleModel>({ url: url }, { isNotData: true });
+}
+
+export function addUser(data: UserModel) {
+  return defHttp.post({ url: Api.AddUser, data });
+}
+
+export function updateUser(data: UserModel) {
+  return defHttp.put({ url: Api.UpdateUser, data });
 }

@@ -55,6 +55,7 @@
         :scroll="{
           y: 495,
         }"
+        :loading="loading"
         style="width: 100%"
         rowKey="userId"
       >
@@ -76,7 +77,7 @@
         </template>
       </BasicTable>
     </card>
-    <AuData @register="register" />
+    <AuData @register="register" @onRefresh="getList" />
   </PageWrapper>
 </template>
 
@@ -86,21 +87,30 @@
   import { BasicTable, TableAction } from '/@/components/Table';
   import { Icon } from '/@/components/Icon';
   import { Form, Input, Card, InputSearch, Tree } from 'ant-design-vue';
-  import { getDepartTree } from '/@/api/sys/dept';
-  import { departModel } from '/@/api/sys/model/departModel';
+  import { DepartTreeModel } from '/@/api/sys/model/departModel';
+  import { useDepartStore } from '/@/store/modules/system/depart';
   import { getUserList } from '/@/api/sys/user';
   import { UserModel } from '/@/api/sys/model/userModel';
   import { BasicData } from '/@/api/model/baseModel';
   import { useList } from '/@/hooks/component/useList';
   import AuData from './components/AuData.vue';
   import { useModal } from '/@/components/Modal';
+  import { BasicColumn } from '/@/components/Table/index';
 
   interface DataModel extends BasicData<UserModel> {
-    expandedKeys: Number[];
-    departTree: departModel[];
+    expandedKeys: number[];
     searchDepart: string;
     autoExpandParent: boolean;
   }
+
+  const columns: BasicColumn[] = [
+    { title: '用户名', dataIndex: 'userName', width: 110 },
+    { title: '用户昵称', dataIndex: 'nickName', width: 110 },
+    { title: '部门', dataIndex: 'dept.deptName', width: 110 },
+    { title: '手机号', dataIndex: 'phonenumber', width: 130 },
+    { title: '创建时间', dataIndex: 'createTime', width: 200 },
+    { title: '操作', slots: { customRender: 'action' }, width: 160 },
+  ];
 
   export default defineComponent({
     components: {
@@ -117,31 +127,28 @@
       TableAction,
     },
     setup() {
-      const data = reactive<DataModel>({
+      const myData = reactive<DataModel>({
         expandedKeys: [],
-        departTree: [],
         searchDepart: '',
         queryParams: {},
         autoExpandParent: false,
         dataList: [],
         total: 0,
-        columns: [
-          { title: '用户名', dataIndex: 'userName', width: 110 },
-          { title: '用户昵称', dataIndex: 'nickName', width: 110 },
-          { title: '部门', dataIndex: 'dept.deptName', width: 110 },
-          { title: '手机号', dataIndex: 'phonenumber', width: 130 },
-          { title: '创建时间', dataIndex: 'createTime', width: 200 },
-          { title: '操作', slots: { customRender: 'action' }, width: 160 },
-        ],
+      });
+
+      const departStore = useDepartStore();
+      departStore.setDepartTree();
+      const departTree = computed<DepartTreeModel[]>(() => {
+        return departStore.getDepartTree;
       });
 
       //  部门
       const searchDepart = computed<string>(() => {
-        return data.searchDepart;
+        return myData.searchDepart;
       });
-      let backupsExpandedKeys: Number[] = [];
+      let backupsExpandedKeys: number[] = [];
       // 获取节点中含有value的所有key集合
-      const getkeyList = (value: string, tree: departModel[], keyList: Number[]) => {
+      const getkeyList = (value: string, tree: DepartTreeModel[], keyList: number[]) => {
         //遍历所有同一级的树
         for (let i = 0; i < tree.length; i++) {
           let node = tree[i];
@@ -159,9 +166,9 @@
       };
 
       //该递归主要用于获取key的父亲节点的key值
-      const getParentKey = (key: Number, tree: departModel[]) => {
-        let parentKey: Number | null = null;
-        let temp: Number | null = null;
+      const getParentKey = (key: number, tree: DepartTreeModel[]) => {
+        let parentKey: number | null = null;
+        let temp: number | null = null;
         //遍历同级节点
         for (let i = 0; i < tree.length; i++) {
           const node = tree[i];
@@ -181,8 +188,8 @@
       };
 
       //获取该节点的所有祖先节点
-      const getAllParentKey = (key: Number, tree: departModel[]) => {
-        var parentKey;
+      const getAllParentKey = (key: number, tree: DepartTreeModel[]) => {
+        let parentKey: number;
         if (key) {
           //获得父亲节点
           parentKey = getParentKey(key, tree);
@@ -198,15 +205,15 @@
       };
 
       watch(searchDepart, (val) => {
-        data.expandedKeys = [];
+        myData.expandedKeys = [];
         if (val) {
           backupsExpandedKeys = [];
           //获取所有存在searchValue的节点
-          let candidateKeysList = getkeyList(val, data.departTree, []);
+          let candidateKeysList = getkeyList(val, departTree.value, []);
           //遍历满足条件的所有节点
           candidateKeysList.map((item) => {
             //获取每个节点的母亲节点
-            var key = getParentKey(item, data.departTree);
+            var key = getParentKey(item, departTree.value);
             //当item是最高一级，父key为undefined，将不放入到数组中
             //如果母亲已存在于数组中，也不放入到数组中
             if (key && !backupsExpandedKeys.some((item) => item === key))
@@ -214,44 +221,55 @@
           });
           let length = backupsExpandedKeys.length;
           for (let i = 0; i < length; i++) {
-            getAllParentKey(backupsExpandedKeys[i], data.departTree);
+            getAllParentKey(backupsExpandedKeys[i], departTree.value);
           }
-          data.expandedKeys = backupsExpandedKeys.slice();
+          myData.expandedKeys = backupsExpandedKeys.slice();
         }
       });
-      const onExpand = (expandedKeys: Number[]) => {
+      const onExpand = (expandedKeys: number[]) => {
         //用户点击展开时，取消自动展开效果
-        data.expandedKeys = expandedKeys;
-        data.autoExpandParent = false;
+        myData.expandedKeys = expandedKeys;
+        myData.autoExpandParent = false;
       };
-      getDepartTree().then((res) => {
-        data.departTree = res;
-      });
 
       // 用户
       const getList = () => {
-        getUserList(data.queryParams).then((res) => {
-          data.dataList = res.rows;
-          data.total = res.total;
-        });
+        myData.loading = true;
+        getUserList(myData.queryParams)
+          .then((res) => {
+            myData.dataList = res.rows;
+            myData.total = res.total;
+            myData.loading = false;
+          })
+          .catch(() => {
+            myData.loading = false;
+          });
       };
 
       const { search, handlePageNumChange, handlePageSizeChange } = useList(
         getList,
-        data.queryParams
+        myData.queryParams
       );
       search();
 
-      const [register, { openModal }] = useModal();
+      const [register, { openModal: openModal, setModalProps }] = useModal();
 
       const handleEdit = (row: UserModel) => {
+        if (row) {
+          setModalProps({ title: '修改用户' });
+        } else {
+          row = {};
+          setModalProps({ title: '添加用户' });
+        }
         openModal(true, row);
       };
 
       const handleDelete = () => {};
 
       return {
-        ...toRefs(data),
+        departTree,
+        columns,
+        ...toRefs(myData),
         onExpand,
         getList,
         search,
@@ -260,7 +278,6 @@
         handleEdit,
         handleDelete,
         register,
-        openModal,
       };
     },
   });

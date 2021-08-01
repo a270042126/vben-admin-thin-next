@@ -1,5 +1,5 @@
-export interface departModel {
-  id: Number;
+export interface DepartTreeModel {
+  id: number;
   label: string;
-  children: departModel[];
+  children: DepartTreeModel[];
 }

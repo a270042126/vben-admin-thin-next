@@ -1,5 +1,7 @@
 import type { UserInfo } from '/#/store';
 import type { BasicFetchResult } from '/@/api/model/baseModel';
+import { RoleModel } from './roleModel';
+import { PostModel } from './postModel';
 /**
  * @description: Login interface parameters
  */
@@ -33,20 +35,28 @@ export interface GetUserInfoModel {
 }
 
 export interface UserModel {
-  userId: number;
-  departId: number;
-  userName: string;
-  nickName: string;
-  email: string;
-  phonenumber: string;
-  sex: string;
-  avatar: string;
-  enable: boolean;
-  status: string;
-  delFlag: string;
-  loginIp: string;
-  createTime: string;
-  roleIds?: String[];
+  userId?: number | null;
+  deptId?: number | null;
+  userName?: string | null;
+  nickName?: string | null;
+  email?: string | null;
+  phonenumber?: string | null;
+  sex?: string | null;
+  avatar?: string | null;
+  enable?: boolean | null;
+  status?: string | null;
+  delFlag?: string | null;
+  loginIp?: string | null;
+  createTime?: string | null;
+  roleIds?: number[];
+}
+
+export interface UserDepRoleModel {
+  roles: RoleModel[];
+  posts: PostModel[];
+  postIds: number[];
+  roleIds: number[];
+  data: UserModel;
 }
 
 export type UserListModel = BasicFetchResult<UserModel>;

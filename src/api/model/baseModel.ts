@@ -1,4 +1,3 @@
-import { BasicColumn } from '/@/components/Table/index';
 export interface BasicPageParams {
   pageNum?: Number;
   pageSize?: Number;
@@ -11,7 +10,7 @@ export interface BasicData<T> {
   queryParams: BasicPageParams;
   dataList: T[];
   total: Number;
-  columns: BasicColumn[];
+  loading?: boolean;
 }
 
 export interface BasicFetchResult<T extends any> {

@@ -89,3 +89,32 @@ export const withInstall = <T>(component: T, alias?: string) => {
   };
   return component as T & Plugin;
 };
+
+/**
+ * 根据子级类型查找所有匹配的父级类型
+ * id: 子级ID
+ * data: 匹配数据
+ * prop: 匹配的类型,默认用ID匹配
+ */
+export function getFathersById(id: any, data: Array<any>, prop = 'id') {
+  const arrRes: Array<any> = [];
+  const rev = (data: any, nodeId: any) => {
+    for (let i = 0, length = data.length; i < length; i++) {
+      const node = data[i];
+      if (node[prop] === nodeId) {
+        arrRes.unshift(node[prop]);
+        return true;
+      } else {
+        if (node.children && node.children.length) {
+          if (rev(node.children, nodeId)) {
+            arrRes.unshift(node[prop]);
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  };
+  rev(data, id);
+  return arrRes;
+}
