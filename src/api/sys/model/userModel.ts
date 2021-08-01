@@ -41,6 +41,7 @@ export interface UserModel {
   nickName?: string | null;
   email?: string | null;
   phonenumber?: string | null;
+  password?: string | null;
   sex?: string | null;
   avatar?: string | null;
   enable?: boolean | null;

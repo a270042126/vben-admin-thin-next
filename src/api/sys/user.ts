@@ -16,6 +16,7 @@ enum Api {
   GetPermCode = '/getPermCode',
   GetUserList = '/system/user/list',
   User = '/system/user/',
+  resetPwd = '/system/user/resetPwd',
 }
 
 /**
@@ -68,4 +69,8 @@ export function updateUser(data: UserModel) {
 
 export function deleteUser(data: number | number[]) {
   return defHttp.delete({ url: `${Api.User}${data}` });
+}
+
+export function resetPwd(data: UserModel) {
+  return defHttp.put({ url: Api.resetPwd, data });
 }

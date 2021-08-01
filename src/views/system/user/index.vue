@@ -59,17 +59,20 @@
           y: 495,
         }"
         rowKey="userId"
-        :rowSelection="{ type: 'checkbox', preserveSelectedRowKeys: false, onChange: onSelected }"
+        :rowSelection="{ type: 'checkbox', selectedRowKeys, onChange: onSelected }"
         :loading="loading"
         style="width: 100%"
       >
         <template #action="{ record }">
           <div>
-            <a-button type="link" style="padding: 0 5px" @click="handleEdit(record)"
+            <a-button type="link" class="text-btn" @click="handleEdit(record)"
               ><Icon icon="ant-design:edit-filled" />编辑</a-button
             >
+            <a-button type="link" class="text-btn" @click="resetPassword(record)"
+              ><Icon icon="ant-design:safety-outlined" />重置密码</a-button
+            >
             <Popconfirm title="您确定删除吗" :onConfirm="handleDelete">
-              <a-button type="link" danger style="padding: 0 5px" @click="handleDelete(record)"
+              <a-button type="link" danger class="text-btn" @click="handleDelete(record)"
                 ><Icon icon="ic:outline-delete-outline" />删除</a-button
               >
             </Popconfirm>
@@ -77,7 +80,8 @@
         </template>
       </BasicTable>
     </card>
-    <AuData @register="register" @onRefresh="getList" />
+    <AuData @register="register1" @onRefresh="getList" />
+    <ResetPwd @register="register2" @onRefresh="getList" />
   </PageWrapper>
 </template>
 
@@ -94,6 +98,7 @@
   import { BasicData, BasicParams } from '/@/api/model/baseModel';
   import { useList } from '/@/hooks/component/useList';
   import AuData from './components/AuData.vue';
+  import ResetPwd from './components/ResetPwd.vue';
   import { useModal } from '/@/components/Modal';
   import { BasicColumn } from '/@/components/Table/index';
   import { useMessage } from '/@/hooks/web/useMessage';
@@ -105,7 +110,7 @@
     searchDepart: string;
     autoExpandParent: boolean;
     queryParams: ParamsModel;
-    selectList: number[];
+    selectedRowKeys: number[];
   }
 
   const columns: BasicColumn[] = [
@@ -114,7 +119,7 @@
     { title: '部门', dataIndex: 'dept.deptName', width: 110 },
     { title: '手机号', dataIndex: 'phonenumber', width: 130 },
     { title: '创建时间', dataIndex: 'createTime', width: 200 },
-    { title: '操作', slots: { customRender: 'action' }, width: 170 },
+    { title: '操作', slots: { customRender: 'action' }, width: 250 },
   ];
 
   export default defineComponent({
@@ -130,6 +135,7 @@
       Icon,
       AuData,
       Popconfirm,
+      ResetPwd,
     },
     setup() {
       const myData = reactive<DataModel>({
@@ -139,7 +145,7 @@
         autoExpandParent: false,
         dataList: [],
         total: 0,
-        selectList: [],
+        selectedRowKeys: [],
       });
 
       const departStore = useDepartStore();
@@ -263,21 +269,21 @@
         search();
       };
 
-      const [register, { openModal: openModal, setModalProps }] = useModal();
+      const [register1, { openModal: openModal1, setModalProps: setModalProps1 }] = useModal();
 
       const handleEdit = (row: UserModel) => {
         if (row) {
-          setModalProps({ title: '修改用户' });
+          setModalProps1({ title: '修改用户' });
         } else {
           row = {};
-          setModalProps({ title: '添加用户' });
+          setModalProps1({ title: '添加用户' });
         }
-        openModal(true, row);
+        openModal1(true, row);
       };
 
       const { notification } = useMessage();
       const handleDelete = (row: UserModel) => {
-        const userIds = row.userId || myData.selectList;
+        const userIds = row.userId || myData.selectedRowKeys;
         myData.loading = true;
         deleteUser(userIds)
           .then(() => {
@@ -285,6 +291,7 @@
               message: '删除成功',
               duration: 3,
             });
+            myData.selectedRowKeys = [];
             getList();
           })
           .catch(() => {
@@ -293,11 +300,16 @@
       };
 
       const onSelected = (keys: number[]) => {
-        myData.selectList = keys;
-        console.log(myData.selectList);
+        myData.selectedRowKeys = keys;
+      };
+
+      const [register2, { openModal: openModal2 }] = useModal();
+      const resetPassword = (row: UserModel) => {
+        openModal2(true, row);
       };
 
       return {
+        resetPassword,
         onSelected,
         onSelectTree,
         departTree,
@@ -310,7 +322,8 @@
         handlePageSizeChange,
         handleEdit,
         handleDelete,
-        register,
+        register1,
+        register2,
       };
     },
   });
