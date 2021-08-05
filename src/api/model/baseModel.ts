@@ -1,18 +1,16 @@
-export interface BasicParams {
-  pageNum?: Number;
-  pageSize?: Number;
+export interface BasicParams extends Recordable {
+  pageNum?: number;
+  pageSize?: number;
   orderByColumn?: string;
   isAsc?: string;
   params?: Recordable;
 }
 
-export interface BasicData<T> {
-  dataList: T[];
-  total: Number;
-  loading?: boolean;
+export interface BasicData {
+  queryParams: BasicParams;
 }
 
 export interface BasicFetchResult<T extends any> {
   rows: T[];
-  total: Number;
+  total: number;
 }

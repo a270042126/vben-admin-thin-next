@@ -30,39 +30,22 @@
         class="flex flex-wrap"
       >
         <FormItem label="用户名" name="username">
-          <Input v-model:value="queryParams.userName" placeholder="用户名" />
+          <Input v-model:value="queryParams.userName" allowClear placeholder="用户名" />
         </FormItem>
         <FormItem label="手机号码" name="phoneNumber">
-          <Input v-model:value="queryParams.phonenumber" placeholder="手机号码" />
+          <Input v-model:value="queryParams.phonenumber" allowClear placeholder="手机号码" />
         </FormItem>
-        <a-button type="primary" class="ml-4" @click="search">搜索</a-button>
+        <a-button type="primary" class="ml-4" @click="handleReload">搜索</a-button>
       </Form>
       <div class="flex mb-4 mt-2">
         <a-button type="primary" class="mr-4" @click="handleEdit()">
           <Icon icon="ant-design:file-add-outlined" />添加用户</a-button
         >
-        <Popconfirm title="您确定删除吗" :onConfirm="handleDelete">
+        <Popconfirm title="您确定删除吗" @confirm="handleDelete">
           <a-button type="primary" danger>删除</a-button>
         </Popconfirm>
       </div>
-      <BasicTable
-        :dataSource="dataList"
-        :columns="columns"
-        :pagination="{
-          pageSize: queryParams.pageSize,
-          total: total,
-          onChange: handlePageNumChange,
-          onShowSizeChange: handlePageSizeChange,
-        }"
-        :bordered="true"
-        :scroll="{
-          y: 495,
-        }"
-        rowKey="userId"
-        :rowSelection="{ type: 'checkbox', selectedRowKeys, onChange: onSelected }"
-        :loading="loading"
-        style="width: 100%"
-      >
+      <BasicTable @register="registerTable">
         <template #action="{ record }">
           <div>
             <a-button type="link" class="text-btn" @click="handleEdit(record)"
@@ -71,8 +54,8 @@
             <a-button type="link" class="text-btn" @click="resetPassword(record)"
               ><Icon icon="ant-design:safety-outlined" />重置密码</a-button
             >
-            <Popconfirm title="您确定删除吗" :onConfirm="handleDelete">
-              <a-button type="link" danger class="text-btn" @click="handleDelete(record)"
+            <Popconfirm title="您确定删除吗" @confirm="handleDelete(record)">
+              <a-button type="link" danger class="text-btn"
                 ><Icon icon="ic:outline-delete-outline" />删除</a-button
               >
             </Popconfirm>
@@ -80,37 +63,31 @@
         </template>
       </BasicTable>
     </card>
-    <AuData @register="register1" @onRefresh="getList" />
-    <ResetPwd @register="register2" @onRefresh="getList" />
+    <AuData @register="register1" @onRefresh="reload" />
+    <ResetPwd @register="register2" @onRefresh="reload" />
   </PageWrapper>
 </template>
 
 <script lang="ts">
   import { defineComponent, reactive, toRefs, watch, computed } from 'vue';
   import { PageWrapper } from '/@/components/Page';
-  import { BasicTable } from '/@/components/Table';
+  import { BasicTable, BasicColumn, useTable } from '/@/components/Table';
   import { Icon } from '/@/components/Icon';
   import { Form, Input, Card, InputSearch, Tree, Popconfirm } from 'ant-design-vue';
   import { DepartTreeModel } from '/@/api/sys/model/departModel';
   import { useDepartStore } from '/@/store/modules/system/depart';
   import { getUserList, deleteUser } from '/@/api/sys/user';
   import { UserModel } from '/@/api/sys/model/userModel';
-  import { BasicData, BasicParams } from '/@/api/model/baseModel';
-  import { useList } from '/@/hooks/component/useList';
+  import { BasicData } from '/@/api/model/baseModel';
   import AuData from './components/AuData.vue';
   import ResetPwd from './components/ResetPwd.vue';
   import { useModal } from '/@/components/Modal';
-  import { BasicColumn } from '/@/components/Table/index';
   import { useMessage } from '/@/hooks/web/useMessage';
 
-  interface ParamsModel extends BasicParams, UserModel {}
-
-  interface DataModel extends BasicData<UserModel> {
+  interface DataModel extends BasicData {
     expandedKeys: number[];
     searchDepart: string;
     autoExpandParent: boolean;
-    queryParams: ParamsModel;
-    selectedRowKeys: number[];
   }
 
   const columns: BasicColumn[] = [
@@ -119,7 +96,7 @@
     { title: '部门', dataIndex: 'dept.deptName', width: 110 },
     { title: '手机号', dataIndex: 'phonenumber', width: 130 },
     { title: '创建时间', dataIndex: 'createTime', width: 200 },
-    { title: '操作', slots: { customRender: 'action' }, width: 250 },
+    { title: '操作', dataIndex: 'action', slots: { customRender: 'action' }, width: 250 },
   ];
 
   export default defineComponent({
@@ -143,9 +120,19 @@
         searchDepart: '',
         queryParams: {},
         autoExpandParent: false,
-        dataList: [],
-        total: 0,
-        selectedRowKeys: [],
+      });
+
+      const [registerTable, { reload, getSelectRowKeys }] = useTable({
+        columns: columns,
+        rowKey: 'userId',
+        bordered: true,
+        api: getUserList,
+        showTableSetting: true,
+        rowSelection: { type: 'checkbox' },
+        beforeFetch: (params: Recordable) => {
+          myData.queryParams.pageNum = params.pageNum;
+          return myData.queryParams;
+        },
       });
 
       const departStore = useDepartStore();
@@ -244,29 +231,13 @@
         myData.autoExpandParent = false;
       };
 
-      // 用户
-      const getList = () => {
-        myData.loading = true;
-        getUserList(myData.queryParams)
-          .then((res) => {
-            myData.dataList = res.rows;
-            myData.total = res.total;
-            myData.loading = false;
-          })
-          .catch(() => {
-            myData.loading = false;
-          });
+      const handleReload = () => {
+        reload({ page: 1 });
       };
-
-      const { search, handlePageNumChange, handlePageSizeChange } = useList(
-        getList,
-        myData.queryParams
-      );
-      search();
 
       const onSelectTree = (keys: number[]) => {
         myData.queryParams.deptId = keys[0];
-        search();
+        handleReload();
       };
 
       const [register1, { openModal: openModal1, setModalProps: setModalProps1 }] = useModal();
@@ -283,24 +254,14 @@
 
       const { notification } = useMessage();
       const handleDelete = (row: UserModel) => {
-        const userIds = row.userId || myData.selectedRowKeys;
-        myData.loading = true;
-        deleteUser(userIds)
-          .then(() => {
-            notification.success({
-              message: '删除成功',
-              duration: 3,
-            });
-            myData.selectedRowKeys = [];
-            getList();
-          })
-          .catch(() => {
-            myData.loading = false;
+        const userIds = row.userId || (getSelectRowKeys() as any[]);
+        deleteUser(userIds).then(() => {
+          notification.success({
+            message: '删除成功',
+            duration: 3,
           });
-      };
-
-      const onSelected = (keys: number[]) => {
-        myData.selectedRowKeys = keys;
+          reload();
+        });
       };
 
       const [register2, { openModal: openModal2 }] = useModal();
@@ -309,17 +270,15 @@
       };
 
       return {
+        handleReload,
+        reload,
+        registerTable,
         resetPassword,
-        onSelected,
         onSelectTree,
         departTree,
         columns,
         ...toRefs(myData),
         onExpand,
-        getList,
-        search,
-        handlePageNumChange,
-        handlePageSizeChange,
         handleEdit,
         handleDelete,
         register1,

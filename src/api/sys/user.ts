@@ -1,4 +1,5 @@
 import { defHttp } from '/@/utils/http/axios';
+import { BasicParams } from '/@/api/model/baseModel';
 import {
   LoginParams,
   LoginResultModel,
@@ -50,7 +51,7 @@ export function doLogout() {
   return defHttp.get({ url: Api.Logout });
 }
 
-export function getUserList(params: Recordable) {
+export function getUserList(params: BasicParams) {
   return defHttp.get<UserListModel>({ url: Api.GetUserList, params });
 }
 

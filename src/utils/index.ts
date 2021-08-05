@@ -118,3 +118,19 @@ export function getFathersById(id: any, data: Array<any>, prop = 'id') {
   rev(data, id);
   return arrRes;
 }
+
+// 添加日期范围
+export function addDateRange(params: Recordable, dateRange: Date[], propName: String) {
+  const search = params;
+  search.params = {};
+  if (null != dateRange && dateRange.length > 0) {
+    if (typeof propName === 'undefined') {
+      search.params['beginTime'] = dateRange[0];
+      search.params['endTime'] = dateRange[1];
+    } else {
+      search.params['begin' + propName] = dateRange[0];
+      search.params['end' + propName] = dateRange[1];
+    }
+  }
+  return search;
+}
