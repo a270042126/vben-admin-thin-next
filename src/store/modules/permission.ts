@@ -23,6 +23,7 @@ import { getMenuList } from '/@/api/sys/menu';
 
 import { useMessage } from '/@/hooks/web/useMessage';
 import { PageEnum } from '/@/enums/pageEnum';
+import { setRouterMeta } from '/@/utils';
 
 interface PermissionState {
   // Permission code list
@@ -188,6 +189,7 @@ export const usePermissionStore = defineStore({
           try {
             this.changePermissionCode();
             const res = await getMenuList();
+            setRouterMeta(res);
             routeList = res as AppRouteRecordRaw[];
           } catch (error) {
             console.error(error);

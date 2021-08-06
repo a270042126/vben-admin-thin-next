@@ -134,3 +134,20 @@ export function addDateRange(params: Recordable, dateRange: Date[], propName: St
   }
   return search;
 }
+
+export function setRouterMeta(routers: Recordable[]) {
+  routers.map((item) => {
+    if (item.meta) {
+      item.meta.hideMenu = item.hidden;
+      item.meta.ignoreKeepAlive = item.meta.noCache;
+      item.meta.frameSrc = item.meta.link;
+    } else {
+      item.meta = {
+        hideMenu: item.hidden,
+      };
+    }
+    if (item.children) {
+      setRouterMeta(item.children);
+    }
+  });
+}

@@ -166,19 +166,25 @@
           status: '0',
         };
         const id = data.userId ? data.userId : null;
-        getUser(id).then((res) => {
-          myData.roleOptions = res.roles;
-          myData.postOptions = res.posts;
-          if (res.data) {
-            myData.form = res.data;
-            myData.form.postIds = res.postIds;
-            myData.form.roleIds = res.roleIds;
-            const departId = myData.form.deptId;
-            if (departId) {
-              myData.form.departIds = getFathersById(departId, departTree.value);
+        changeLoading(true);
+        getUser(id)
+          .then((res) => {
+            myData.roleOptions = res.roles;
+            myData.postOptions = res.posts;
+            if (res.data) {
+              myData.form = res.data;
+              myData.form.postIds = res.postIds;
+              myData.form.roleIds = res.roleIds;
+              const departId = myData.form.deptId;
+              if (departId) {
+                myData.form.departIds = getFathersById(departId, departTree.value);
+              }
             }
-          }
-        });
+            changeLoading(false);
+          })
+          .catch(() => {
+            changeLoading(false);
+          });
       });
 
       const { notification } = useMessage();

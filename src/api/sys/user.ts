@@ -68,7 +68,7 @@ export function updateUser(data: UserModel) {
   return defHttp.put({ url: Api.User, data });
 }
 
-export function deleteUser(data: number | number[]) {
+export function deleteUser(data: number | string[]) {
   return defHttp.delete({ url: `${Api.User}${data}` });
 }
 

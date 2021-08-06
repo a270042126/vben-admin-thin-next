@@ -19,7 +19,8 @@
   import { BasicTable, useTable, BasicColumn } from '/@/components/Table';
   import { BasicModal, useModalInner } from '/@/components/Modal';
   import { BasicData } from '/@/api/model/baseModel';
-  import { getDbList } from '/@/api/tool/gen';
+  import { getDbList, importTable } from '/@/api/tool/gen';
+  import { useMessage } from '/@/hooks/web/useMessage';
 
   type DataModel = BasicData;
 
@@ -38,12 +39,13 @@
       FormItem: Form.Item,
       Input,
     },
-    setup() {
+    emits: ['onRefresh', 'register'],
+    setup(_, context) {
       const myData = reactive<DataModel>({
         queryParams: {},
       });
 
-      const [registerTable, { reload }] = useTable({
+      const [registerTable, { reload, getSelectRowKeys }] = useTable({
         columns: columns,
         rowKey: 'tableName',
         bordered: true,
@@ -56,7 +58,7 @@
         },
       });
 
-      const [register, { closeModal }] = useModalInner(() => {
+      const [register, { closeModal, changeLoading }] = useModalInner(() => {
         reload();
       });
 
@@ -64,7 +66,22 @@
         reload({ page: 1 });
       };
 
+      const { notification } = useMessage();
       const onSubmit = () => {
+        changeLoading(true);
+        const tables = getSelectRowKeys ? getSelectRowKeys().join(',') : '';
+        importTable(tables)
+          .then(() => {
+            changeLoading(false);
+            notification.success({
+              message: '更新成功',
+              duration: 3,
+            });
+            context.emit('onRefresh');
+          })
+          .catch(() => {
+            changeLoading(false);
+          });
         closeModal();
       };
       return {

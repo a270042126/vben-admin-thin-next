@@ -122,7 +122,7 @@
         autoExpandParent: false,
       });
 
-      const [registerTable, { reload, getSelectRowKeys }] = useTable({
+      const [registerTable, { reload, getSelectRowKeys, setLoading }] = useTable({
         columns: columns,
         rowKey: 'userId',
         bordered: true,
@@ -253,14 +253,19 @@
 
       const { notification } = useMessage();
       const handleDelete = (row: UserModel) => {
-        const userIds = row.userId || (getSelectRowKeys() as any[]);
-        deleteUser(userIds).then(() => {
-          notification.success({
-            message: '删除成功',
-            duration: 3,
+        setLoading(true);
+        const userIds = row.userId || getSelectRowKeys();
+        deleteUser(userIds)
+          .then(() => {
+            notification.success({
+              message: '删除成功',
+              duration: 3,
+            });
+            reload();
+          })
+          .catch(() => {
+            setLoading(false);
           });
-          reload();
-        });
       };
 
       const [register2, { openModal: openModal2 }] = useModal();

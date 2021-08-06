@@ -17,9 +17,9 @@
         <a-button type="primary" class="mr-4" @click="importTable()">
           <Icon icon="ant-design:file-add-outlined" />导入</a-button
         >
-        <!-- <Popconfirm title="您确定删除吗" :onConfirm="handleDelete">
+        <Popconfirm title="您确定删除吗" @confirm="handleDelete">
           <a-button type="primary" danger>删除</a-button>
-        </Popconfirm> -->
+        </Popconfirm>
       </div>
       <BasicTable @register="registerTable">
         <template #action="{ record }">
@@ -36,7 +36,7 @@
         </template>
       </BasicTable>
     </card>
-    <SelectTable @register="register1" />
+    <SelectTable @register="register1" @onRefresh="reload" />
   </PageWrapper>
 </template>
 
@@ -48,8 +48,12 @@
   import { useModal } from '/@/components/Modal';
   import { Icon } from '/@/components/Icon';
   import { BasicData } from '/@/api/model/baseModel';
-  import { getGenTableList } from '/@/api/tool/gen';
+  import { getGenTableList, deleteGenTable } from '/@/api/tool/gen';
   import SelectTable from './components/SelectTable.vue';
+  import { GenTableModel } from '/@/api/tool/model/genModel';
+  import { useMessage } from '/@/hooks/web/useMessage';
+  import { useGo } from '/@/hooks/web/usePage';
+  import { PageEnum } from '/@/enums/pageEnum';
 
   interface DataModel extends BasicData {
     dateRange: Date[];
@@ -83,7 +87,7 @@
         queryParams: {},
       });
 
-      const [registerTable, { reload }] = useTable({
+      const [registerTable, { reload, getSelectRowKeys, setLoading }] = useTable({
         columns: columns,
         rowKey: 'tableId',
         bordered: true,
@@ -104,9 +108,28 @@
         reload({ page: 1 });
       };
 
-      const handleEdit = () => {};
-      const handleDelete = () => {};
+      const { notification } = useMessage();
+      const go = useGo();
+      const handleEdit = (row: GenTableModel) => {
+        go(`${PageEnum.EDIT_TABLT}${row.tableId}`);
+      };
+      const handleDelete = (row: GenTableModel) => {
+        setLoading(false);
+        const ids = row.tableId || getSelectRowKeys();
+        deleteGenTable(ids)
+          .then(() => {
+            notification.success({
+              message: '删除成功',
+              duration: 3,
+            });
+            reload();
+          })
+          .catch(() => {
+            setLoading(false);
+          });
+      };
       return {
+        reload,
         handleReload,
         handleDelete,
         handleEdit,

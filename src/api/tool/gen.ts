@@ -4,6 +4,8 @@ import { BasicParams } from '/@/api/model/baseModel';
 enum Api {
   genTablelist = '/tool/gen/list',
   dbList = '/tool/gen/db/list',
+  gen = '/tool/gen',
+  importTable = '/tool/gen/importTable',
 }
 
 /**
@@ -16,4 +18,12 @@ export const getGenTableList = (params: BasicParams) => {
 
 export const getDbList = (params: BasicParams) => {
   return defHttp.get<genTableListModel>({ url: Api.dbList, params });
+};
+
+export const deleteGenTable = (id: number | string[]) => {
+  return defHttp.delete({ url: `${Api.gen}/${id}` });
+};
+
+export const importTable = (tables: string) => {
+  return defHttp.post({ url: `${Api.importTable}?tables=${tables}` });
 };
