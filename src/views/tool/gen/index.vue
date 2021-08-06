@@ -89,8 +89,7 @@
         bordered: true,
         api: getGenTableList,
         rowSelection: { type: 'checkbox' },
-        beforeFetch: (params: Recordable) => {
-          myData.queryParams.pageNum = params.pageNum;
+        beforeFetch: () => {
           return myData.queryParams;
         },
         showTableSetting: true,

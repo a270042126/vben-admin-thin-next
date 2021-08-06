@@ -129,8 +129,7 @@
         api: getUserList,
         showTableSetting: true,
         rowSelection: { type: 'checkbox' },
-        beforeFetch: (params: Recordable) => {
-          myData.queryParams.pageNum = params.pageNum;
+        beforeFetch: () => {
           return myData.queryParams;
         },
       });
