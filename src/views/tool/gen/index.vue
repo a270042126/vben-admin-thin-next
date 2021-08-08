@@ -3,10 +3,10 @@
     <card class="!mr-4 dep-tree">
       <Form :model="queryParams" ref="formRef" layout="horizontal" class="m-form">
         <FormItem label="表名称" name="tableName">
-          <Input v-model:value="queryParams.tableName" allowClear placeholder="请输入用户昵称" />
+          <Input v-model:value="queryParams.tableName" allowClear placeholder="请输入表名称" />
         </FormItem>
         <FormItem label="表描述" name="tableComment">
-          <Input v-model:value="queryParams.tableComment" allowClear placeholder="请输入用户昵称" />
+          <Input v-model:value="queryParams.tableComment" allowClear placeholder="请输入表描述" />
         </FormItem>
         <FormItem label="创建日期" name="dateRange">
           <RangePicker v-model:value="dateRange" />
@@ -69,6 +69,7 @@
   ];
 
   export default defineComponent({
+    name: 'Gen',
     components: {
       Form,
       Input,

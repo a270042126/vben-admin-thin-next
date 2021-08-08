@@ -1,6 +1,6 @@
 import type { BasicFetchResult } from '/@/api/model/baseModel';
 
-export interface GenTableColumn {
+export interface GenTableColumnModel {
   columnId?: number;
   /** 归属表编号 */
   tableId?: number;
@@ -71,7 +71,7 @@ export interface GenTableModel {
   /** 子表信息 */
   subTable?: GenTableModel;
   /** 表列信息 */
-  columns?: GenTableColumn[];
+  columns?: GenTableColumnModel[];
   /** 其它生成选项 */
   options?: string;
   /** 树编码字段 */
@@ -81,8 +81,17 @@ export interface GenTableModel {
   /** 树名称字段 */
   treeName?: string;
   /** 上级菜单ID字段 */
-  parentMenuId?: string;
+  parentMenuId?: string | null;
   /** 上级菜单名称字段 */
   parentMenuName?: string;
+
+  parentMenuIds?: string[];
 }
+
+export interface EditGenTableModel {
+  info: GenTableModel;
+  rows: GenTableColumnModel[];
+  tables: GenTableModel[];
+}
+
 export type genTableListModel = BasicFetchResult<GenTableModel>;

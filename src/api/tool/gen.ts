@@ -1,5 +1,5 @@
 import { defHttp } from '/@/utils/http/axios';
-import { genTableListModel } from './model/genModel';
+import { genTableListModel, EditGenTableModel, GenTableModel } from './model/genModel';
 import { BasicParams } from '/@/api/model/baseModel';
 enum Api {
   genTablelist = '/tool/gen/list',
@@ -26,4 +26,12 @@ export const deleteGenTable = (id: number | string[]) => {
 
 export const importTable = (tables: string) => {
   return defHttp.post({ url: `${Api.importTable}?tables=${tables}` });
+};
+
+export const getGenTableByTableId = (id: string) => {
+  return defHttp.get<EditGenTableModel>({ url: `${Api.gen}/${id}` });
+};
+
+export const updateGenTable = (data: GenTableModel) => {
+  return defHttp.put({ url: Api.gen, data });
 };

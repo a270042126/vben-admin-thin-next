@@ -135,6 +135,9 @@ export function addDateRange(params: Recordable, dateRange: Date[], propName: St
   return search;
 }
 
+/**
+ * 重设路由 meta
+ */
 export function setRouterMeta(routers: Recordable[]) {
   routers.map((item) => {
     if (item.meta) {
@@ -150,4 +153,56 @@ export function setRouterMeta(routers: Recordable[]) {
       setRouterMeta(item.children);
     }
   });
+}
+
+/**
+ * 设置子孩子空为null
+ * @param list
+ */
+export function handleChildren(list: Recordable[]) {
+  list.map((item) => {
+    if (item.children && item.children.length) {
+      handleChildren(item.children);
+    } else {
+      item.children = null;
+    }
+  });
+}
+
+/**
+ * 构造树型结构数据
+ * @param {*} data 数据源
+ * @param {*} id id字段 默认 'id'
+ * @param {*} parentId 父节点字段 默认 'parentId'
+ * @param {*} children 孩子节点字段 默认 'children'
+ * @param {*} rootId 根Id 默认 0
+ */
+export function handleTree(data: Recordable[], id: any, parentId?: any, rootId?: any) {
+  id = id || 'id';
+  parentId = parentId || 'parentId';
+  // eslint-disable-next-line prefer-spread
+  rootId =
+    rootId ||
+    // eslint-disable-next-line prefer-spread
+    Math.min.apply(
+      Math,
+      data.map((item) => {
+        return item[parentId];
+      })
+    ) ||
+    0;
+  // 对源数据深度克隆
+  const cloneData = JSON.parse(JSON.stringify(data));
+  // 循环所有项
+  const treeData = cloneData.filter((father: any) => {
+    const branchArr = cloneData.filter((child: any) => {
+      // 返回每一项的子级数组
+      return father[id] === child[parentId];
+    });
+    // eslint-disable-next-line no-unused-expressions
+    branchArr.length > 0 ? (father.children = branchArr) : '';
+    // 返回第一层
+    return father[parentId] === rootId;
+  });
+  return treeData !== '' ? treeData : data;
 }
