@@ -43,7 +43,7 @@
 <script lang="ts">
   import { defineComponent, reactive, toRefs } from 'vue';
   import { PageWrapper } from '/@/components/Page';
-  import { Form, Input, Card, RangePicker, Popconfirm } from 'ant-design-vue';
+  import { Form, Input, Card, RangePicker, Popconfirm, message } from 'ant-design-vue';
   import { BasicTable, BasicColumn, useTable } from '/@/components/Table';
   import { useModal } from '/@/components/Modal';
   import { Icon } from '/@/components/Icon';
@@ -51,9 +51,9 @@
   import { getGenTableList, deleteGenTable } from '/@/api/tool/gen';
   import SelectTable from './components/SelectTable.vue';
   import { GenTableModel } from '/@/api/tool/model/genModel';
-  import { useMessage } from '/@/hooks/web/useMessage';
   import { useGo } from '/@/hooks/web/usePage';
   import { PageEnum } from '/@/enums/pageEnum';
+  import bus from '/@/bus';
 
   interface DataModel extends BasicData {
     dateRange: Date[];
@@ -98,6 +98,7 @@
           return myData.queryParams;
         },
         showTableSetting: true,
+        clickToRowSelect: false,
       });
 
       const [register1, { openModal: openModal1 }] = useModal();
@@ -109,20 +110,20 @@
         reload({ page: 1 });
       };
 
-      const { notification } = useMessage();
+      bus.on('genTableRefresh', () => {
+        reload();
+      });
+
       const go = useGo();
       const handleEdit = (row: GenTableModel) => {
-        go(`${PageEnum.EDIT_TABLT}${row.tableId}`);
+        go(`${PageEnum.EDIT_TABLE}${row.tableId}`);
       };
       const handleDelete = (row: GenTableModel) => {
         setLoading(false);
         const ids = row.tableId || getSelectRowKeys();
         deleteGenTable(ids)
           .then(() => {
-            notification.success({
-              message: '删除成功',
-              duration: 3,
-            });
+            message.success('删除成功');
             reload();
           })
           .catch(() => {

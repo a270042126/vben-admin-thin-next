@@ -87,6 +87,7 @@
     RadioGroup,
     Radio,
     Textarea,
+    message,
   } from 'ant-design-vue';
   import { useDepartStore } from '/@/store/modules/system/depart';
   import { DepartTreeModel } from '/@/api/sys/model/departModel';
@@ -96,7 +97,6 @@
   import { useSelect } from '/@/hooks/component/useSelect';
   import { getFathersById } from '/@/utils/index';
   import { getUser, addUser, updateUser } from '/@/api/sys/user';
-  import { useMessage } from '/@/hooks/web/useMessage';
 
   interface FormModel extends UserModel {
     departIds?: number[];
@@ -187,8 +187,6 @@
           });
       });
 
-      const { notification } = useMessage();
-
       const onSubmit = async () => {
         const data = await formRef.value.validateFields();
         if (!data) {
@@ -200,10 +198,7 @@
           updateUser(form)
             .then(() => {
               changeLoading(false);
-              notification.success({
-                message: '更新成功',
-                duration: 3,
-              });
+              message.success('更新成功');
               context.emit('onRefresh');
               closeModal();
             })
@@ -214,10 +209,7 @@
           addUser(form)
             .then(() => {
               changeLoading(false);
-              notification.success({
-                message: '添加成功',
-                duration: 3,
-              });
+              message.success('修改成功');
               context.emit('onRefresh');
               closeModal();
             })

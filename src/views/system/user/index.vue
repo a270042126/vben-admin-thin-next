@@ -73,7 +73,7 @@
   import { PageWrapper } from '/@/components/Page';
   import { BasicTable, BasicColumn, useTable } from '/@/components/Table';
   import { Icon } from '/@/components/Icon';
-  import { Form, Input, Card, InputSearch, Tree, Popconfirm } from 'ant-design-vue';
+  import { Form, Input, Card, InputSearch, Tree, Popconfirm, message } from 'ant-design-vue';
   import { DepartTreeModel } from '/@/api/sys/model/departModel';
   import { useDepartStore } from '/@/store/modules/system/depart';
   import { getUserList, deleteUser } from '/@/api/sys/user';
@@ -82,7 +82,6 @@
   import AuData from './components/AuData.vue';
   import ResetPwd from './components/ResetPwd.vue';
   import { useModal } from '/@/components/Modal';
-  import { useMessage } from '/@/hooks/web/useMessage';
 
   interface DataModel extends BasicData {
     expandedKeys: number[];
@@ -251,16 +250,12 @@
         openModal1(true, row);
       };
 
-      const { notification } = useMessage();
       const handleDelete = (row: UserModel) => {
         setLoading(true);
         const userIds = row.userId || getSelectRowKeys();
         deleteUser(userIds)
           .then(() => {
-            notification.success({
-              message: '删除成功',
-              duration: 3,
-            });
+            message.success('删除成功');
             reload();
           })
           .catch(() => {

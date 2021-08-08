@@ -8,5 +8,7 @@ export enum PageEnum {
   // error log page path
   ERROR_LOG_PAGE = '/error-log/list',
   // 编辑代码
-  EDIT_TABLT = 'gen/edit/',
+  EDIT_TABLE = '/tool/gen/edit/',
+  // 生成代码
+  GEN_TABLE = '/tool/gen',
 }

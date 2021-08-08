@@ -14,7 +14,7 @@
       </Tabs>
       <div class="text-center">
         <a-button type="primary" class="mr-4" @click="onSubmit">保存</a-button>
-        <a-button>返回</a-button>
+        <a-button @click="goBack">返回</a-button>
       </div>
     </card>
     <Loading :loading="loading" />
@@ -24,7 +24,7 @@
 <script lang="ts">
   import { defineComponent, computed, ref, onMounted } from 'vue';
   import { useRoute } from 'vue-router';
-  import { Card, Tabs } from 'ant-design-vue';
+  import { Card, Tabs, message } from 'ant-design-vue';
   import TableForm from './components/TableForm.vue';
   import FieldForm from './components/FieldForm.vue';
   import GenInfoForm from './components/GenInfoForm.vue';
@@ -32,8 +32,11 @@
   import { getGenTableByTableId, updateGenTable } from '/@/api/tool/gen';
   import { getRouteMenuList } from '/@/api/sys/menu';
   import { handleTree, getFathersById } from '/@/utils';
-  import { useMessage } from '/@/hooks/web/useMessage';
   import { Loading } from '/@/components/Loading';
+  import { useGo } from '/@/hooks/web/usePage';
+  import { useTabs } from '/@/hooks/web/useTabs';
+  import { PageEnum } from '/@/enums/pageEnum';
+  import bus from '/@/bus';
 
   export default defineComponent({
     // eslint-disable-next-line vue/component-definition-name-casing
@@ -83,7 +86,14 @@
         getTableInfo();
       });
 
-      const { notification } = useMessage();
+      const go = useGo();
+      const { closeCurrent } = useTabs();
+
+      const goBack = () => {
+        closeCurrent();
+        go(PageEnum.GEN_TABLE, true);
+      };
+
       const onSubmit = () => {
         loading.value = true;
         const promise1 = baseRef.value.$refs.formRef.validateFields();
@@ -99,18 +109,19 @@
           };
           updateGenTable(genTable)
             .then(() => {
-              notification.success({
-                message: '修改成功',
-                duration: 3,
-              });
+              message.success('修改成功');
               loading.value = false;
+              bus.emit('genTableRefresh');
+              goBack();
             })
             .catch(() => {
               loading.value = false;
             });
         });
       };
+
       return {
+        goBack,
         loading,
         onSubmit,
         baseRef,
