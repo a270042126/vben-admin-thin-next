@@ -6,6 +6,7 @@ enum Api {
   dbList = '/tool/gen/db/list',
   gen = '/tool/gen',
   importTable = '/tool/gen/importTable',
+  batchGenCode = '/tool/gen/batchGenCode',
 }
 
 /**
@@ -34,4 +35,11 @@ export const getGenTableByTableId = (id: string) => {
 
 export const updateGenTable = (data: GenTableModel) => {
   return defHttp.put({ url: Api.gen, data });
+};
+
+export const batchGenCode = (tables: string | string[]) => {
+  return defHttp.get(
+    { url: `${Api.batchGenCode}?tables=${tables}`, responseType: 'blob' },
+    { isTransformResponse: false }
+  );
 };

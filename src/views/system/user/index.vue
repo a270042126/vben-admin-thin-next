@@ -42,8 +42,11 @@
           <Icon icon="ant-design:file-add-outlined" />添加用户</a-button
         >
         <Popconfirm title="您确定删除吗" @confirm="handleDelete">
-          <a-button type="primary" danger>删除</a-button>
+          <a-button type="primary" danger><Icon icon="ic:outline-delete-outline" />删除</a-button>
         </Popconfirm>
+        <a-button type="primary" class="ml-4" @click="handleExport()">
+          <Icon icon="ant-design:vertical-align-bottom-outlined" />导出</a-button
+        >
       </div>
       <BasicTable @register="registerTable">
         <template #action="{ record }">
@@ -76,12 +79,13 @@
   import { Form, Input, Card, InputSearch, Tree, Popconfirm, message } from 'ant-design-vue';
   import { DepartTreeModel } from '/@/api/sys/model/departModel';
   import { useDepartStore } from '/@/store/modules/system/depart';
-  import { getUserList, deleteUser } from '/@/api/sys/user';
+  import { getUserList, deleteUser, exportExcel } from '/@/api/sys/user';
   import { UserModel } from '/@/api/sys/model/userModel';
   import { BasicData } from '/@/api/model/baseModel';
   import AuData from './components/AuData.vue';
   import ResetPwd from './components/ResetPwd.vue';
   import { useModal } from '/@/components/Modal';
+  import { download } from '/@/utils';
 
   interface DataModel extends BasicData {
     expandedKeys: number[];
@@ -268,7 +272,14 @@
         openModal2(true, row);
       };
 
+      const handleExport = () => {
+        exportExcel(myData.queryParams).then((res) => {
+          download(res);
+        });
+      };
+
       return {
+        handleExport,
         handleReload,
         reload,
         registerTable,

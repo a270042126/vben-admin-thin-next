@@ -24,6 +24,9 @@
       <BasicTable @register="registerTable">
         <template #action="{ record }">
           <div>
+            <a-button type="link" class="text-btn" @click="download(record)"
+              ><Icon icon="ant-design:download-outlined" />生成代码</a-button
+            >
             <a-button type="link" class="text-btn" @click="handleEdit(record)"
               ><Icon icon="ant-design:edit-filled" />编辑</a-button
             >
@@ -48,13 +51,13 @@
   import { useModal } from '/@/components/Modal';
   import { Icon } from '/@/components/Icon';
   import { BasicData } from '/@/api/model/baseModel';
-  import { getGenTableList, deleteGenTable } from '/@/api/tool/gen';
+  import { getGenTableList, deleteGenTable, batchGenCode } from '/@/api/tool/gen';
   import SelectTable from './components/SelectTable.vue';
   import { GenTableModel } from '/@/api/tool/model/genModel';
   import { useGo } from '/@/hooks/web/usePage';
   import { PageEnum } from '/@/enums/pageEnum';
   import bus from '/@/bus';
-
+  import { downloadByData } from '/@/utils/file/download';
   interface DataModel extends BasicData {
     dateRange: Date[];
   }
@@ -130,7 +133,14 @@
             setLoading(false);
           });
       };
+      const download = (row: GenTableModel) => {
+        const tables = row.tableName || '';
+        batchGenCode(tables).then((res) => {
+          downloadByData(res, '生成代码.zip');
+        });
+      };
       return {
+        download,
         reload,
         handleReload,
         handleDelete,
@@ -138,7 +148,6 @@
         registerTable,
         importTable,
         register1,
-        columns,
         ...toRefs(myData),
       };
     },

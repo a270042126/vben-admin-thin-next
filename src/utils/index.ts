@@ -3,6 +3,9 @@ import type { App, Plugin } from 'vue';
 
 import { unref } from 'vue';
 import { isObject } from '/@/utils/is';
+import { useGlobSetting } from '/@/hooks/setting';
+
+const globSetting = useGlobSetting();
 
 export const noop = () => {};
 
@@ -205,4 +208,21 @@ export function handleTree(data: Recordable[], id: any, parentId?: any, rootId?:
     return father[parentId] === rootId;
   });
   return treeData !== '' ? treeData : data;
+}
+
+// 回显数据字典
+export function selectDictLabel(datas: any, value: any) {
+  const actions: Array<any> = [];
+  Object.keys(datas).some((key) => {
+    if (datas[key].dictValue === '' + value) {
+      actions.push(datas[key].dictLabel);
+      return true;
+    }
+  });
+  return actions.join('');
+}
+
+export function download(fileName: string) {
+  window.location.href =
+    globSetting.apiUrl + '/common/download?fileName=' + encodeURI(fileName) + '&delete=' + true;
 }

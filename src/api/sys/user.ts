@@ -18,6 +18,7 @@ enum Api {
   GetUserList = '/system/user/list',
   User = '/system/user/',
   resetPwd = '/system/user/resetPwd',
+  export = '/system/user/export',
 }
 
 /**
@@ -74,4 +75,8 @@ export function deleteUser(data: number | string[]) {
 
 export function resetPwd(data: UserModel) {
   return defHttp.put({ url: Api.resetPwd, data });
+}
+
+export function exportExcel(params: BasicParams) {
+  return defHttp.get<string>({ url: Api.export, params });
 }
