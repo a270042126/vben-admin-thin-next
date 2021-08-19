@@ -11,5 +11,5 @@ export const getDictTypeOptions = () => {
 };
 
 export const getDicts = (type: string) => {
-  return defHttp.get<DictDataModel>({ url: `${Api.getDicts}${type}` });
+  return defHttp.get<DictDataModel[]>({ url: `${Api.getDicts}${type}` });
 };
