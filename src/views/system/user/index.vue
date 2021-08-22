@@ -21,7 +21,7 @@
         </template>
       </Tree>
     </card>
-    <card class="main">
+    <card class="my-card">
       <Form
         :model="queryParams"
         ref="formRef"
@@ -302,11 +302,5 @@
   .dep-tree {
     min-height: 400px;
     min-width: 300px;
-  }
-
-  .main {
-    flex: auto;
-    min-width: 0;
-    padding: 40px 0;
   }
 </style>

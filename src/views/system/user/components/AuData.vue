@@ -97,18 +97,15 @@
   import { useSelect } from '/@/hooks/component/useSelect';
   import { getFathersById } from '/@/utils/index';
   import { getUser, addUser, updateUser } from '/@/api/sys/user';
-
   interface FormModel extends UserModel {
     departIds?: number[];
     postIds?: number[];
   }
-
   interface DataModel {
     form: FormModel;
     roleOptions: RoleModel[];
     postOptions: PostModel[];
   }
-
   const rules = {
     nickName: [{ required: true, message: '请输入用户昵称' }],
     userName: [{ required: true, message: '请输入用户名称' }],
@@ -117,7 +114,6 @@
       { pattern: /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/, message: '请输入正确邮箱' },
     ],
   };
-
   export default defineComponent({
     components: {
       BasicModal,
@@ -157,7 +153,6 @@
           myData.form.deptId = null;
         }
       });
-
       const [register, { closeModal, changeLoading }] = useModalInner((data: UserModel) => {
         myData.form = {
           departIds: [],
@@ -186,7 +181,6 @@
             changeLoading(false);
           });
       });
-
       const onSubmit = async () => {
         const data = await formRef.value.validateFields();
         if (!data) {
@@ -218,7 +212,6 @@
             });
         }
       };
-
       return {
         rules,
         formRef,
