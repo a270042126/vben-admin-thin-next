@@ -63,9 +63,18 @@
       title: '插入',
       dataIndex: 'isInsert',
       edit: true,
-      editComponent: 'Checkbox',
-      editValueMap: (value) => {
-        return value == '1' ? '是' : '否';
+      editComponent: 'Select',
+      editComponentProps: {
+        options: [
+          {
+            label: '是',
+            value: '1',
+          },
+          {
+            label: '否',
+            value: null,
+          },
+        ],
       },
       width: 200,
     },
@@ -73,9 +82,18 @@
       title: '编辑',
       dataIndex: 'isEdit',
       edit: true,
-      editComponent: 'Checkbox',
-      editValueMap: (value) => {
-        return value == '1' ? '是' : '否';
+      editComponent: 'Select',
+      editComponentProps: {
+        options: [
+          {
+            label: '是',
+            value: '1',
+          },
+          {
+            label: '否',
+            value: null,
+          },
+        ],
       },
       width: 200,
     },
@@ -83,9 +101,18 @@
       title: '列表',
       dataIndex: 'isList',
       edit: true,
-      editComponent: 'Checkbox',
-      editValueMap: (value) => {
-        return value == '1' ? '是' : '否';
+      editComponent: 'Select',
+      editComponentProps: {
+        options: [
+          {
+            label: '是',
+            value: '1',
+          },
+          {
+            label: '否',
+            value: null,
+          },
+        ],
       },
       width: 200,
     },
@@ -93,9 +120,18 @@
       title: '查询',
       dataIndex: 'isQuery',
       edit: true,
-      editComponent: 'Checkbox',
-      editValueMap: (value) => {
-        return value == '1' ? '是' : '否';
+      editComponent: 'Select',
+      editComponentProps: {
+        options: [
+          {
+            label: '是',
+            value: '1',
+          },
+          {
+            label: '否',
+            value: null,
+          },
+        ],
       },
       width: 200,
     },
@@ -146,9 +182,18 @@
       title: '必填',
       dataIndex: 'isRequired',
       edit: true,
-      editComponent: 'Checkbox',
-      editValueMap: (value) => {
-        return value == '1' ? '是' : '否';
+      editComponent: 'Select',
+      editComponentProps: {
+        options: [
+          {
+            label: '是',
+            value: '1',
+          },
+          {
+            label: '否',
+            value: null,
+          },
+        ],
       },
       width: 200,
     },
@@ -226,6 +271,7 @@
           dataIndex: 'dictType',
           width: 250,
           edit: true,
+          allowClear: true,
           editComponent: 'Select',
           editComponentProps: {
             options: options,

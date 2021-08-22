@@ -20,6 +20,7 @@
         :rule="getRule"
         :ruleMessage="ruleMessage"
         :class="getWrapperClass"
+        :allowClear="getAllowClear"
         ref="elRef"
         @change="handleChange"
         @options-change="handleOptionsChange"
@@ -82,6 +83,8 @@
       const defaultValueRef = ref<any>(props.value);
 
       const { prefixCls } = useDesign('editable-cell');
+
+      const getAllowClear = computed(() => props.column?.allowClear || false);
 
       const getComponent = computed(() => props.column?.editComponent || 'Input');
       const getRule = computed(() => props.column?.editRule);
@@ -347,6 +350,7 @@
       }
 
       return {
+        getAllowClear,
         isEdit,
         prefixCls,
         handleEdit,
@@ -431,6 +435,9 @@
     }
 
     .ellipsis-cell {
+      width: 100%;
+      min-height: 20px;
+
       .cell-content {
         overflow-wrap: break-word;
         word-break: break-word;
