@@ -1,39 +1,28 @@
 <template>
-  <BasicModal v-bind="$attrs" title="角色" width="700px" @register="register" @ok="onSubmit">
-    <Form :model="form" :rules="rules" ref="formRef" layout="horizontal" class="m-form">
+  <BasicModal v-bind="$attrs" title="角色" width="600px" @register="register" @ok="onSubmit">
+    <Form :model="form" :rules="rules" ref="formRef" layout="horizontal" :label-col="{ span: 5 }">
       <FormItem label="角色名称" name="roleName">
         <Input v-model:value="form.roleName" placeholder="请输入角色名称" />
       </FormItem>
-      <FormItem label="角色权限字符串" name="roleKey">
+      <FormItem label="权限字符" name="roleKey">
         <Input v-model:value="form.roleKey" placeholder="请输入角色权限字符串" />
       </FormItem>
       <FormItem label="显示顺序" name="roleSort">
-        <Input v-model:value="form.roleSort" placeholder="请输入显示顺序" />
+        <Input v-model:value="form.roleSort" placeholder="请输入显示顺序" type="number" />
       </FormItem>
-      <FormItem label="数据范围" name="dataScope">
-        <Input v-model:value="form.dataScope" placeholder="请输入数据范围" />
-      </FormItem>
-      <FormItem label="菜单树选择项是否关联显示" name="menuCheckStrictly">
-        <!-- <Input
-          v-model:value="form.menuCheckStrictly"
-          placeholder="请输入菜单树选择项是否关联显示"
-        /> -->
-      </FormItem>
-      <FormItem label="部门树选择项是否关联显示" name="deptCheckStrictly">
-        <!-- <Input
-          v-model:value="form.deptCheckStrictly"
-          placeholder="请输入部门树选择项是否关联显示"
-        /> -->
-      </FormItem>
-      <!-- <FormItem label="角色状态" name="status">
-        <RadioGroup v-model:value="form.status">
-          <Radio>
-            请选择字典生成
-          </Radio>
-        </RadioGroup>
-      </FormItem> -->
-      <FormItem label="删除标志" name="delFlag">
-        <Input v-model:value="form.delFlag" placeholder="请输入删除标志" />
+      <FormItem label="菜单权限">
+        <div>
+          <Checkbox @change="handleCheckedTreeExpand">收缩/展开</Checkbox>
+          <Checkbox @change="handleCheckedTreeNodeAll">全选/不全选</Checkbox>
+        </div>
+        <div class="tree">
+          <Tree
+            checkable
+            :expandedKeys="expandedKeys"
+            :tree-data="menuTree"
+            :replaceFields="{ children: 'children', title: 'label', key: 'id' }"
+          />
+        </div>
       </FormItem>
       <FormItem label="备注" name="remark">
         <Textarea v-model:value="form.remark" placeholder="请输入备注" />
@@ -45,15 +34,17 @@
 <script lang="ts">
   import { defineComponent, reactive, toRefs, ref } from 'vue';
   import { BasicModal, useModalInner } from '/@/components/Modal';
-  import { Form, Input, Textarea, message } from 'ant-design-vue';
+  import { Form, Input, Textarea, message, Checkbox, Tree } from 'ant-design-vue';
   import { getRole, updateRole, addRole } from '/@/api/sys/role';
   import { RoleModel } from '/@/api/sys/model/roleModel';
+  import { getTreeSelect } from '/@/api/sys/menu';
   import { useSelect } from '/@/hooks/component/useSelect';
-  // import { getDicts } from '/@/api/sys/dict';
-  // import {  DictDataModel } from '/@/utils'
+  import { MenuTreeModel } from '/@/api/sys/model/menuModel';
   type FormModel = RoleModel;
   interface DataModel {
     form: FormModel;
+    menuTree: MenuTreeModel[];
+    expandedKeys: number[];
   }
 
   const rules = {
@@ -70,12 +61,16 @@
       Input,
       FormItem: Form.Item,
       Textarea,
+      Checkbox,
+      Tree,
     },
     emits: ['onRefresh', 'register'],
     setup(_, context) {
       const formRef = ref();
       const myData = reactive<DataModel>({
         form: {},
+        menuTree: [],
+        expandedKeys: [],
       });
       const [register, { closeModal, changeLoading }] = useModalInner((data: RoleModel) => {
         myData.form = {};
@@ -93,6 +88,10 @@
               changeLoading(false);
             });
         }
+
+        getTreeSelect().then((res) => {
+          myData.menuTree = res;
+        });
       });
       const onSubmit = async () => {
         const data = await formRef.value.validateFields();
@@ -125,6 +124,27 @@
             });
         }
       };
+
+      const handleCheckedTreeExpand = (val: ChangeEvent) => {
+        if (val.target.checked) {
+          const list: number[] = [];
+          myData.menuTree.map((item) => {
+            list.push(item.id);
+          });
+          myData.expandedKeys = list;
+        } else {
+          myData.expandedKeys = [];
+        }
+      };
+
+      const handleCheckedTreeNodeAll = (val: ChangeEvent) => {
+        if (val.target.checked) {
+          //
+        } else {
+          //
+        }
+      };
+
       const { filterOption } = useSelect();
       return {
         filterOption,
@@ -132,7 +152,16 @@
         ...toRefs(myData),
         register,
         onSubmit,
+        handleCheckedTreeExpand,
+        handleCheckedTreeNodeAll,
       };
     },
   });
 </script>
+
+<style lang="less" scoped>
+  .tree {
+    margin: 10px 0;
+    border: 1px solid #d9d9d9;
+  }
+</style>

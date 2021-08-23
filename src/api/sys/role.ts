@@ -5,6 +5,7 @@ enum Api {
   list = '/system/role/list',
   role = '/system/role',
   export = '/system/role/export',
+  changeStatus = '/system/role/changeStatus',
 }
 // 查询角色信息列表
 export const getRoleList = (params: BasicParams) => {
@@ -29,4 +30,8 @@ export const delRole = (id: any | any[]) => {
 // 导出角色信息
 export const exportRole = (params: BasicParams) => {
   return defHttp.get<string>({ url: Api.role + '/export', params });
+};
+// 更改角色状态
+export const changeStatus = (data: RoleModel) => {
+  return defHttp.put({ url: Api.changeStatus, data });
 };

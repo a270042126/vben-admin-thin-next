@@ -1,5 +1,5 @@
 <template>
-  <PageWrapper contentClass="flex items-start">
+  <PageWrapper v-loading="loading" contentClass="flex items-start">
     <!-- <template #headerContent> </template> -->
     <card class="!mr-4 dep-tree">
       <InputSearch v-model:value="searchDepart" placeholder="请搜索部门" />
@@ -49,6 +49,16 @@
         >
       </div>
       <BasicTable @register="registerTable">
+        <template #status="{ record }">
+          <Switch
+            :checked="record.status === '0'"
+            :onChange="
+              (val) => {
+                handleStatusChange(record, val);
+              }
+            "
+          />
+        </template>
         <template #action="{ record }">
           <div>
             <a-button type="link" class="text-btn" @click="handleEdit(record)"
@@ -76,10 +86,19 @@
   import { PageWrapper } from '/@/components/Page';
   import { BasicTable, BasicColumn, useTable } from '/@/components/Table';
   import { Icon } from '/@/components/Icon';
-  import { Form, Input, Card, InputSearch, Tree, Popconfirm, message } from 'ant-design-vue';
+  import {
+    Form,
+    Input,
+    Card,
+    InputSearch,
+    Tree,
+    Popconfirm,
+    Switch,
+    message,
+  } from 'ant-design-vue';
   import { DepartTreeModel } from '/@/api/sys/model/departModel';
   import { useDepartStore } from '/@/store/modules/system/depart';
-  import { getUserList, deleteUser, exportExcel } from '/@/api/sys/user';
+  import { getUserList, deleteUser, changeStatus, exportExcel } from '/@/api/sys/user';
   import { UserModel } from '/@/api/sys/model/userModel';
   import { BasicData } from '/@/api/model/baseModel';
   import AuData from './components/AuData.vue';
@@ -98,6 +117,7 @@
     { title: '用户昵称', dataIndex: 'nickName', width: 110 },
     { title: '部门', dataIndex: 'dept.deptName', width: 110 },
     { title: '手机号', dataIndex: 'phonenumber', width: 130 },
+    { title: '状态', dataIndex: 'status', slots: { customRender: 'status' }, width: 200 },
     { title: '创建时间', dataIndex: 'createTime', width: 200 },
     { title: '操作', dataIndex: 'action', slots: { customRender: 'action' }, width: 250 },
   ];
@@ -116,6 +136,7 @@
       AuData,
       Popconfirm,
       ResetPwd,
+      Switch,
     },
     setup() {
       const myData = reactive<DataModel>({
@@ -123,6 +144,7 @@
         searchDepart: '',
         queryParams: {},
         autoExpandParent: false,
+        loading: false,
       });
 
       const [registerTable, { reload, getSelectRowKeys, setLoading }] = useTable({
@@ -255,15 +277,16 @@
       };
 
       const handleDelete = (row: UserModel) => {
-        setLoading(true);
+        myData.loading = true;
         const userIds = row.userId || getSelectRowKeys();
         deleteUser(userIds)
           .then(() => {
             message.success('删除成功');
             reload();
+            myData.loading = false;
           })
           .catch(() => {
-            setLoading(false);
+            myData.loading = false;
           });
       };
 
@@ -273,12 +296,33 @@
       };
 
       const handleExport = () => {
-        exportExcel(myData.queryParams).then((res) => {
-          download(res);
-        });
+        myData.loading = true;
+        exportExcel(myData.queryParams)
+          .then((res) => {
+            myData.loading = false;
+            download(res);
+          })
+          .catch(() => {
+            myData.loading = false;
+          });
+      };
+
+      const handleStatusChange = (row: UserModel, val: boolean) => {
+        row.status = val ? '0' : '1';
+        setLoading(true);
+        changeStatus(row)
+          .then(() => {
+            setLoading(false);
+            reload();
+          })
+          .catch(() => {
+            row.status = !val ? '0' : '1';
+            setLoading(false);
+          });
       };
 
       return {
+        handleStatusChange,
         handleExport,
         handleReload,
         reload,

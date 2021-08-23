@@ -42,6 +42,12 @@ export interface MenuModel {
   /** 子菜单 */
   children: MenuModel[];
 }
+
+export interface MenuTreeModel {
+  id: number;
+  label: string;
+  children: MenuTreeModel[];
+}
 /**
  * @description: Get menu return value
  */

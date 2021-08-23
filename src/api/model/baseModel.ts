@@ -8,6 +8,7 @@ export interface BasicParams extends Recordable {
 
 export interface BasicData {
   queryParams: BasicParams;
+  loading?: boolean;
 }
 
 export interface BasicFetchResult<T extends any> {

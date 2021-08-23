@@ -1,5 +1,5 @@
 <template>
-  <PageWrapper contentClass="flex items-start">
+  <PageWrapper v-loading="loading" contentClass="flex items-start">
     <card class="my-card">
       <Form :model="queryParams" ref="formRef" layout="horizontal" class="m-form">
         <FormItem label="角色名称" name="roleName">
@@ -25,6 +25,16 @@
         >
       </div>
       <BasicTable @register="registerTable">
+        <template #status="{ record }">
+          <Switch
+            :checked="record.status === '0'"
+            :onChange="
+              (val) => {
+                handleStatusChange(record, val);
+              }
+            "
+          />
+        </template>
         <template #action="{ record }">
           <div>
             <a-button type="link" class="text-btn" @click="handleEdit(record)">
@@ -45,14 +55,14 @@
 
 <script lang="ts">
   import { defineComponent, reactive, toRefs } from 'vue';
-  import { Form, Input, Card, Popconfirm, message } from 'ant-design-vue';
+  import { Form, Input, Card, Popconfirm, Switch, message } from 'ant-design-vue';
   import { PageWrapper } from '/@/components/Page';
   import { BasicTable, BasicColumn, useTable } from '/@/components/Table';
   import { Icon } from '/@/components/Icon';
   import AuData from './components/AuData.vue';
   import { useModal } from '/@/components/Modal';
   import { BasicData } from '/@/api/model/baseModel';
-  import { getRoleList, delRole, exportRole } from '/@/api/sys/role';
+  import { getRoleList, delRole, changeStatus, exportRole } from '/@/api/sys/role';
   import { RoleModel } from '/@/api/sys/model/roleModel';
   import { useSelect } from '/@/hooks/component/useSelect';
   import { download } from '/@/utils';
@@ -70,28 +80,20 @@
       Icon,
       Popconfirm,
       AuData,
+      Switch,
     },
     setup() {
       const myData = reactive<DataModel>({
         queryParams: {},
+        loading: false,
       });
 
       const columns: BasicColumn[] = [
         { title: '角色ID', dataIndex: 'roleId', width: 110 },
         { title: '角色名称', dataIndex: 'roleName', width: 110 },
-        { title: '角色权限字符串', dataIndex: 'roleKey', width: 150 },
+        { title: '权限字符', dataIndex: 'roleKey', width: 150 },
         { title: '显示顺序', dataIndex: 'roleSort', width: 110 },
-        { title: '数据范围', dataIndex: 'dataScope', width: 110 },
-        { title: '菜单树选择项是否关联显示', dataIndex: 'menuCheckStrictly', width: 250 },
-        { title: '部门树选择项是否关联显示', dataIndex: 'deptCheckStrictly', width: 250 },
-        {
-          title: '角色状态',
-          dataIndex: 'status',
-          format: (text: string) => {
-            return text == '0' ? '正常' : '停用';
-          },
-          width: 110,
-        },
+        { title: '角色状态', dataIndex: 'status', slots: { customRender: 'status' }, width: 200 },
         { title: '备注', dataIndex: 'remark', width: 110 },
         { title: '操作', dataIndex: 'action', slots: { customRender: 'action' }, width: 250 },
       ];
@@ -120,30 +122,45 @@
         openModal1(true, row);
       };
 
-      const handleExport = () => {
+      const handleStatusChange = (row: RoleModel, val: boolean) => {
+        row.status = val ? '0' : '1';
         setLoading(true);
+        changeStatus(row)
+          .then(() => {
+            setLoading(false);
+            reload();
+          })
+          .catch(() => {
+            row.status = !val ? '0' : '1';
+            setLoading(false);
+          });
+      };
+
+      const handleExport = () => {
+        myData.loading = true;
         exportRole(myData.queryParams)
           .then((res) => {
-            setLoading(false);
+            myData.loading = false;
             download(res);
           })
           .catch(() => {
-            setLoading(false);
+            myData.loading = false;
           });
       };
       const handleReload = () => {
         reload({ page: 1 });
       };
       const handleDelete = (row: RoleModel) => {
-        setLoading(false);
+        myData.loading = true;
         const ids = row.roleId || getSelectRowKeys();
         delRole(ids)
           .then(() => {
             message.success('删除成功');
             reload();
+            myData.loading = false;
           })
           .catch(() => {
-            setLoading(false);
+            myData.loading = false;
           });
       };
       const resetQuery = () => {
@@ -152,6 +169,7 @@
       };
       const { filterOption } = useSelect();
       return {
+        handleStatusChange,
         reload,
         handleExport,
         handleEdit,
