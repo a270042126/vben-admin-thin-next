@@ -58,6 +58,7 @@ const transform: AxiosTransform = {
     switch (code) {
       case ResultEnum.TIMEOUT:
         timeoutMsg = t('sys.api.timeoutMessage');
+        checkStatus(code, timeoutMsg, 'none');
         break;
       default:
         if (msg) {

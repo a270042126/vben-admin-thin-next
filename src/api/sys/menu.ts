@@ -1,10 +1,16 @@
 import { defHttp } from '/@/utils/http/axios';
-import { getMenuListResultModel, MenuModel, MenuTreeModel } from './model/menuModel';
+import {
+  getMenuListResultModel,
+  MenuModel,
+  MenuTreeModel,
+  RoleMenuSelectModel,
+} from './model/menuModel';
 
 enum Api {
   GetMenuList = '/getRouters',
   MenuList = '/system/menu/list',
   treeselect = '/system/menu/treeselect',
+  roleMenuTreeSelect = '/system/menu/roleMenuTreeselect/',
 }
 
 /**
@@ -21,4 +27,11 @@ export const getRouteMenuList = () => {
 
 export const getTreeSelect = () => {
   return defHttp.get<MenuTreeModel[]>({ url: Api.treeselect });
+};
+
+export const roleMenuTreeSelect = (roleId: number) => {
+  return defHttp.get<RoleMenuSelectModel>(
+    { url: Api.roleMenuTreeSelect + roleId },
+    { isNotData: true }
+  );
 };

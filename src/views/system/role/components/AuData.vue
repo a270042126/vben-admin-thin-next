@@ -12,15 +12,18 @@
       </FormItem>
       <FormItem label="菜单权限">
         <div>
-          <Checkbox @change="handleCheckedTreeExpand">收缩/展开</Checkbox>
           <Checkbox @change="handleCheckedTreeNodeAll">全选/不全选</Checkbox>
+          <Checkbox :checked="!checkStrictly" @change="handleCheckedTreeConnect">父子联动</Checkbox>
         </div>
         <div class="tree">
           <Tree
+            ref="menuRef"
             checkable
-            :expandedKeys="expandedKeys"
             :tree-data="menuTree"
+            :checkedKeys="checkedKeys"
+            :checkStrictly="checkStrictly"
             :replaceFields="{ children: 'children', title: 'label', key: 'id' }"
+            :onCheck="onCheck"
           />
         </div>
       </FormItem>
@@ -37,14 +40,20 @@
   import { Form, Input, Textarea, message, Checkbox, Tree } from 'ant-design-vue';
   import { getRole, updateRole, addRole } from '/@/api/sys/role';
   import { RoleModel } from '/@/api/sys/model/roleModel';
-  import { getTreeSelect } from '/@/api/sys/menu';
+  import { getTreeSelect, roleMenuTreeSelect } from '/@/api/sys/menu';
   import { useSelect } from '/@/hooks/component/useSelect';
   import { MenuTreeModel } from '/@/api/sys/model/menuModel';
-  type FormModel = RoleModel;
+  import { findPnodeId } from '/@/utils';
+
+  interface FormModel extends RoleModel {
+    menuIds?: number[];
+  }
   interface DataModel {
     form: FormModel;
     menuTree: MenuTreeModel[];
-    expandedKeys: number[];
+    allTreeKeys: number[];
+    checkedKeys: number[];
+    checkStrictly: boolean;
   }
 
   const rules = {
@@ -66,14 +75,18 @@
     },
     emits: ['onRefresh', 'register'],
     setup(_, context) {
+      const menuRef = ref();
       const formRef = ref();
       const myData = reactive<DataModel>({
         form: {},
         menuTree: [],
-        expandedKeys: [],
+        allTreeKeys: [],
+        checkedKeys: [],
+        checkStrictly: false,
       });
       const [register, { closeModal, changeLoading }] = useModalInner((data: RoleModel) => {
         myData.form = {};
+        myData.checkedKeys = [];
         const id = data.roleId ? data.roleId : null;
         if (id) {
           changeLoading(true);
@@ -87,12 +100,75 @@
             .catch(() => {
               changeLoading(false);
             });
+          roleMenuTreeSelect(id).then((res) => {
+            myData.menuTree = res.menus;
+            const keys: number[] = [];
+            setAllKeys(myData.menuTree, keys);
+            myData.allTreeKeys = keys;
+            // 移除父类
+            let keys2: number[] = [];
+            res.checkedKeys.map((id) => {
+              const parentIds = findPnodeId(myData.menuTree, id) as number[];
+              keys2 = keys2.concat(parentIds);
+            });
+            myData.checkedKeys = res.checkedKeys.filter((a) => {
+              let flag = true;
+              keys2.some((b) => {
+                if (a === b) {
+                  flag = false;
+                  return true;
+                }
+              });
+              return flag;
+            });
+          });
+        } else {
+          getTreeSelect().then((res) => {
+            myData.menuTree = res;
+            const keys = [];
+            setAllKeys(myData.menuTree, keys);
+            myData.allTreeKeys = keys;
+          });
         }
-
-        getTreeSelect().then((res) => {
-          myData.menuTree = res;
-        });
       });
+
+      const setAllKeys = (items: MenuTreeModel[], keys: number[]) => {
+        items.map((item) => {
+          keys.push(item.id);
+          if (item.children) {
+            setAllKeys(item.children, keys);
+          }
+        });
+      };
+
+      const onCheck = (val: number[]) => {
+        myData.checkedKeys = val;
+      };
+
+      const handleCheckedTreeNodeAll = (val: ChangeEvent) => {
+        if (val.target.checked) {
+          myData.checkedKeys = myData.allTreeKeys;
+        } else {
+          myData.checkedKeys = [];
+        }
+      };
+
+      const handleCheckedTreeConnect = () => {
+        myData.checkStrictly = !myData.checkStrictly;
+      };
+
+      // 所有菜单节点数据
+      const getMenuAllCheckedKeys = () => {
+        let keys: number[] = [];
+        myData.checkedKeys.map((id) => {
+          const parentIds = findPnodeId(myData.menuTree, id) as number[];
+          keys = keys.concat(parentIds);
+        });
+        keys = keys.concat(myData.checkedKeys);
+        keys = Array.from(new Set(keys));
+        return keys;
+      };
+
       const onSubmit = async () => {
         const data = await formRef.value.validateFields();
         if (!data) {
@@ -100,6 +176,7 @@
         }
         changeLoading(true);
         const form = myData.form;
+        form.menuIds = getMenuAllCheckedKeys();
         if (form.roleId) {
           updateRole(form)
             .then(() => {
@@ -125,35 +202,18 @@
         }
       };
 
-      const handleCheckedTreeExpand = (val: ChangeEvent) => {
-        if (val.target.checked) {
-          const list: number[] = [];
-          myData.menuTree.map((item) => {
-            list.push(item.id);
-          });
-          myData.expandedKeys = list;
-        } else {
-          myData.expandedKeys = [];
-        }
-      };
-
-      const handleCheckedTreeNodeAll = (val: ChangeEvent) => {
-        if (val.target.checked) {
-          //
-        } else {
-          //
-        }
-      };
-
       const { filterOption } = useSelect();
       return {
+        menuRef,
+        formRef,
         filterOption,
         rules,
         ...toRefs(myData),
         register,
         onSubmit,
-        handleCheckedTreeExpand,
         handleCheckedTreeNodeAll,
+        handleCheckedTreeConnect,
+        onCheck,
       };
     },
   });
@@ -163,5 +223,6 @@
   .tree {
     margin: 10px 0;
     border: 1px solid #d9d9d9;
+    min-height: 100px;
   }
 </style>

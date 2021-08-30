@@ -210,6 +210,33 @@ export function handleTree(data: Recordable[], id: any, parentId?: any, rootId?:
   return treeData !== '' ? treeData : data;
 }
 
+// 查找父类
+//传入参数：需要遍历的json，需要匹配的id
+export function findPnodeId(arr: any[], sid: any) {
+  const vArr: any[] = []; //用来接收相关联父级id的集合
+  function shellArr(obj: any[], id: any) {
+    if (obj && obj.length) {
+      obj.forEach((item: any) => {
+        if (item.children && item.children.length) {
+          if (item.children.some((row: any) => row.id === id)) {
+            //这里利用some筛选子级有没有符合条件的，有就重新递归，没有就继续递归
+            vArr.unshift(item.id);
+            //重新递归
+            shellArr(arr, item.id);
+          } else {
+            //继续递归
+            shellArr(item.children, id);
+          }
+        } else {
+          return;
+        }
+      });
+    }
+  }
+  shellArr(arr, sid);
+  return vArr;
+}
+
 // 回显数据字典
 export function selectDictLabel(datas: any, value: any) {
   const actions: Array<any> = [];
@@ -222,6 +249,7 @@ export function selectDictLabel(datas: any, value: any) {
   return actions.join('');
 }
 
+// 下载文件
 export function download(fileName: string) {
   window.location.href =
     globSetting.apiUrl + '/common/download?fileName=' + encodeURI(fileName) + '&delete=' + true;

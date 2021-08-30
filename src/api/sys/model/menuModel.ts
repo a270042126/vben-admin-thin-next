@@ -48,6 +48,12 @@ export interface MenuTreeModel {
   label: string;
   children: MenuTreeModel[];
 }
+
+export interface RoleMenuSelectModel {
+  checkedKeys: number[];
+  menus: MenuTreeModel[];
+}
+
 /**
  * @description: Get menu return value
  */
