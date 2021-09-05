@@ -20,6 +20,7 @@ enum Api {
   resetPwd = '/system/user/resetPwd',
   export = '/system/user/export',
   changeStatus = '/system/user/changeStatus',
+  importTemplate = '/system/user/importTemplate',
 }
 
 /**
@@ -84,4 +85,8 @@ export function exportExcel(params: BasicParams) {
 
 export function changeStatus(data: UserModel) {
   return defHttp.put({ url: Api.changeStatus, data });
+}
+
+export function importTemplate() {
+  return defHttp.get<string>({ url: Api.importTemplate }, { isTransformResponse: true });
 }

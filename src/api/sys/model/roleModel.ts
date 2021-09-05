@@ -19,6 +19,7 @@ export interface RoleModel {
   status?: string | null;
   /** 删除标志（0代表存在 2代表删除） */
   delFlag?: string | null;
+  deptIds?: number[];
 }
 
 export type RoleListModel = BasicFetchResult<RoleModel[]>;

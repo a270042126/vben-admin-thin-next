@@ -254,3 +254,7 @@ export function download(fileName: string) {
   window.location.href =
     globSetting.apiUrl + '/common/download?fileName=' + encodeURI(fileName) + '&delete=' + true;
 }
+
+export function download2(url: string) {
+  window.location.href = globSetting.apiUrl + url;
+}

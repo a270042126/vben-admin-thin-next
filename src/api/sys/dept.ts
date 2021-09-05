@@ -1,7 +1,8 @@
 import { defHttp } from '/@/utils/http/axios';
-import { DepartTreeModel } from './model/departModel';
+import { DepartTreeModel, RoleDeptTreeModel } from './model/departModel';
 enum Api {
   getDepartTree = '/system/dept/treeselect',
+  roleDeptTreeselect = '/system/dept/roleDeptTreeselect/',
 }
 
 /**
@@ -10,4 +11,11 @@ enum Api {
 
 export const getDepartTree = () => {
   return defHttp.get<DepartTreeModel[]>({ url: Api.getDepartTree });
+};
+
+export const roleDeptTreeselect = (roleId: number) => {
+  return defHttp.get<RoleDeptTreeModel>(
+    { url: Api.roleDeptTreeselect + roleId },
+    { isNotData: true }
+  );
 };

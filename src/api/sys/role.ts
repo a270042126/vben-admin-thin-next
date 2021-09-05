@@ -6,6 +6,7 @@ enum Api {
   role = '/system/role',
   export = '/system/role/export',
   changeStatus = '/system/role/changeStatus',
+  dataScope = '/system/role/dataScope',
 }
 // 查询角色信息列表
 export const getRoleList = (params: BasicParams) => {
@@ -34,4 +35,8 @@ export const exportRole = (params: BasicParams) => {
 // 更改角色状态
 export const changeStatus = (data: RoleModel) => {
   return defHttp.put({ url: Api.changeStatus, data });
+};
+// 更新数据分配
+export const dataScope = (data: RoleModel) => {
+  return defHttp.put({ url: Api.dataScope, data });
 };

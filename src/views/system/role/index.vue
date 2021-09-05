@@ -14,13 +14,27 @@
         <a-button class="ml-4" @click="resetQuery">重置</a-button>
       </Form>
       <div class="flex mb-4 mt-2">
-        <a-button type="primary" class="mr-4" @click="handleEdit()">
+        <a-button
+          v-if="hasPermission('system:role:add')"
+          type="primary"
+          class="mr-4"
+          @click="handleEdit()"
+        >
           <Icon icon="ant-design:file-add-outlined" />添加</a-button
         >
-        <Popconfirm title="您确定删除吗" @confirm="handleDelete">
+        <Popconfirm
+          v-if="hasPermission('system:role:remove')"
+          title="您确定删除吗"
+          @confirm="handleDelete"
+        >
           <a-button type="primary" danger><Icon icon="ic:outline-delete-outline" />删除</a-button>
         </Popconfirm>
-        <a-button type="primary" class="ml-4" @click="handleExport()">
+        <a-button
+          v-if="hasPermission('system:role:export')"
+          type="primary"
+          class="ml-4"
+          @click="handleExport()"
+        >
           <Icon icon="ant-design:vertical-align-bottom-outlined" />导出</a-button
         >
       </div>
@@ -37,10 +51,27 @@
         </template>
         <template #action="{ record }">
           <div>
-            <a-button type="link" class="text-btn" @click="handleEdit(record)">
+            <a-button
+              v-if="hasPermission('system:role:edit')"
+              type="link"
+              class="text-btn"
+              @click="handleEdit(record)"
+            >
               <Icon icon="ant-design:edit-filled" />编辑
             </a-button>
-            <Popconfirm title="您确定删除吗" @confirm="handleDelete(record)">
+            <a-button
+              v-if="hasPermission('system:role:edit')"
+              type="link"
+              class="text-btn"
+              @click="handleAllot(record)"
+            >
+              <Icon icon="ant-design:api-filled" />数据权限
+            </a-button>
+            <Popconfirm
+              v-if="hasPermission('system:role:remove')"
+              title="您确定删除吗"
+              @confirm="handleDelete(record)"
+            >
               <a-button type="link" danger class="text-btn">
                 <Icon icon="ic:outline-delete-outline" />删除
               </a-button>
@@ -50,12 +81,14 @@
       </BasicTable>
     </card>
     <AuData @register="register1" @onRefresh="reload" />
+    <Allot @register="register2" />
   </PageWrapper>
 </template>
 
 <script lang="ts">
   import { defineComponent, reactive, toRefs } from 'vue';
   import { Form, Input, Card, Popconfirm, Switch, message } from 'ant-design-vue';
+  import { usePermission } from '/@/hooks/web/usePermission';
   import { PageWrapper } from '/@/components/Page';
   import { BasicTable, BasicColumn, useTable } from '/@/components/Table';
   import { Icon } from '/@/components/Icon';
@@ -66,6 +99,7 @@
   import { RoleModel } from '/@/api/sys/model/roleModel';
   import { useSelect } from '/@/hooks/component/useSelect';
   import { download } from '/@/utils';
+  import Allot from './components/Allot.vue';
 
   type DataModel = BasicData;
 
@@ -81,8 +115,10 @@
       Popconfirm,
       AuData,
       Switch,
+      Allot,
     },
     setup() {
+      const { hasPermission } = usePermission();
       const myData = reactive<DataModel>({
         queryParams: {},
         loading: false,
@@ -111,7 +147,6 @@
       });
 
       const [register1, { openModal: openModal1, setModalProps: setModalProps1 }] = useModal();
-
       const handleEdit = (row: RoleModel) => {
         if (row) {
           setModalProps1({ title: '修改角色信息' });
@@ -120,6 +155,11 @@
           setModalProps1({ title: '添加角色信息' });
         }
         openModal1(true, row);
+      };
+
+      const [register2, { openModal: openModal2 }] = useModal();
+      const handleAllot = (row: RoleModel) => {
+        openModal2(true, row);
       };
 
       const handleStatusChange = (row: RoleModel, val: boolean) => {
@@ -169,6 +209,8 @@
       };
       const { filterOption } = useSelect();
       return {
+        hasPermission,
+        handleAllot,
         handleStatusChange,
         reload,
         handleExport,
@@ -180,6 +222,7 @@
         resetQuery,
         filterOption,
         register1,
+        register2,
       };
     },
   });

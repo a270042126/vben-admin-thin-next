@@ -12,35 +12,35 @@ export interface RouteItem {
 
 export interface MenuModel {
   /** 菜单ID */
-  menuId: string;
+  menuId?: string;
   /** 菜单名称 */
-  menuName: string;
+  menuName?: string;
   /** 父菜单名称 */
-  parentName: string;
+  parentName?: string;
   /** 父菜单ID */
-  parentId: number;
+  parentId?: number;
   /** 显示顺序 */
-  orderNum: string;
+  orderNum?: string;
   /** 路由地址 */
-  path: string;
+  path?: string;
   /** 组件路径 */
-  component: string;
+  component?: string;
   /** 是否为外链（0是 1否） */
-  isFrame: string;
+  isFrame?: string;
   /** 是否缓存（0缓存 1不缓存） */
-  isCache: string;
+  isCache?: string;
   /** 类型（M目录 C菜单 F按钮） */
-  menuType: string;
+  menuType?: string;
   /** 显示状态（0显示 1隐藏） */
-  visible: string;
+  visible?: string;
   /** 菜单状态（0显示 1隐藏） */
-  status: string;
+  status?: string;
   /** 权限字符串 */
-  perms: string;
+  perms?: string;
   /** 菜单图标 */
-  icon: string;
+  icon?: string;
   /** 子菜单 */
-  children: MenuModel[];
+  children?: MenuModel[];
 }
 
 export interface MenuTreeModel {

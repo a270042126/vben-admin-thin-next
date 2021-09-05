@@ -8,13 +8,14 @@
   import { getDictTypeOptions } from '/@/api/sys/dict';
 
   const columns: BasicColumn[] = [
-    { title: '字段列名', dataIndex: 'columnName', width: 110 },
+    { title: '字段列名', dataIndex: 'columnName', width: 110, fixed: 'left' },
     {
       title: '字段描述',
       dataIndex: 'columnComment',
       edit: true,
       editComponent: 'Input',
       width: 200,
+      fixed: 'left',
     },
     { title: '数据类型', dataIndex: 'columnType', width: 200 },
     {

@@ -3,3 +3,8 @@ export interface DepartTreeModel {
   label: string;
   children: DepartTreeModel[];
 }
+
+export interface RoleDeptTreeModel {
+  checkedKeys: number[];
+  depts: DepartTreeModel[];
+}

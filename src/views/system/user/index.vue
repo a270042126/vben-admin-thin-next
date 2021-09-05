@@ -38,14 +38,36 @@
         <a-button type="primary" class="ml-4" @click="handleReload">搜索</a-button>
       </Form>
       <div class="flex mb-4 mt-2">
-        <a-button type="primary" class="mr-4" @click="handleEdit()">
+        <a-button
+          v-if="hasPermission('system:user:add')"
+          type="primary"
+          class="mr-4"
+          @click="handleEdit()"
+        >
           <Icon icon="ant-design:file-add-outlined" />添加用户</a-button
         >
-        <Popconfirm title="您确定删除吗" @confirm="handleDelete">
+        <Popconfirm
+          v-if="hasPermission('system:user:remove')"
+          title="您确定删除吗"
+          @confirm="handleDelete"
+        >
           <a-button type="primary" danger><Icon icon="ic:outline-delete-outline" />删除</a-button>
         </Popconfirm>
-        <a-button type="primary" class="ml-4" @click="handleExport()">
+        <a-button
+          v-if="hasPermission('system:user:export')"
+          type="primary"
+          class="ml-4"
+          @click="handleExport()"
+        >
           <Icon icon="ant-design:vertical-align-bottom-outlined" />导出</a-button
+        >
+        <a-button
+          v-if="hasPermission('system:user:import')"
+          type="primary"
+          class="ml-4"
+          @click="handleImport()"
+        >
+          <Icon icon="ant-design:upload-outlined" />导入</a-button
         >
       </div>
       <BasicTable @register="registerTable">
@@ -61,13 +83,25 @@
         </template>
         <template #action="{ record }">
           <div>
-            <a-button type="link" class="text-btn" @click="handleEdit(record)"
+            <a-button
+              v-if="hasPermission('system:user:edit')"
+              type="link"
+              class="text-btn"
+              @click="handleEdit(record)"
               ><Icon icon="ant-design:edit-filled" />编辑</a-button
             >
-            <a-button type="link" class="text-btn" @click="resetPassword(record)"
+            <a-button
+              v-if="hasPermission('system:user:resetPwd')"
+              type="link"
+              class="text-btn"
+              @click="resetPassword(record)"
               ><Icon icon="ant-design:safety-outlined" />重置密码</a-button
             >
-            <Popconfirm title="您确定删除吗" @confirm="handleDelete(record)">
+            <Popconfirm
+              v-if="hasPermission('system:user:remove')"
+              title="您确定删除吗"
+              @confirm="handleDelete(record)"
+            >
               <a-button type="link" danger class="text-btn"
                 ><Icon icon="ic:outline-delete-outline" />删除</a-button
               >
@@ -78,12 +112,14 @@
     </card>
     <AuData @register="register1" @onRefresh="reload" />
     <ResetPwd @register="register2" @onRefresh="reload" />
+    <Upload @register="register3" @onRefresh="reload" />
   </PageWrapper>
 </template>
 
 <script lang="ts">
   import { defineComponent, reactive, toRefs, watch, computed } from 'vue';
   import { PageWrapper } from '/@/components/Page';
+  import { usePermission } from '/@/hooks/web/usePermission';
   import { BasicTable, BasicColumn, useTable } from '/@/components/Table';
   import { Icon } from '/@/components/Icon';
   import {
@@ -98,13 +134,21 @@
   } from 'ant-design-vue';
   import { DepartTreeModel } from '/@/api/sys/model/departModel';
   import { useDepartStore } from '/@/store/modules/system/depart';
-  import { getUserList, deleteUser, changeStatus, exportExcel } from '/@/api/sys/user';
+  import {
+    getUserList,
+    deleteUser,
+    changeStatus,
+    exportExcel,
+    importTemplate,
+  } from '/@/api/sys/user';
   import { UserModel } from '/@/api/sys/model/userModel';
   import { BasicData } from '/@/api/model/baseModel';
   import AuData from './components/AuData.vue';
   import ResetPwd from './components/ResetPwd.vue';
   import { useModal } from '/@/components/Modal';
   import { download } from '/@/utils';
+  import { Upload, UploadModel } from '/@/components/UploadFile';
+  import { useGlobSetting } from '/@/hooks/setting';
 
   interface DataModel extends BasicData {
     expandedKeys: number[];
@@ -137,8 +181,10 @@
       Popconfirm,
       ResetPwd,
       Switch,
+      Upload,
     },
     setup() {
+      const { hasPermission } = usePermission();
       const myData = reactive<DataModel>({
         expandedKeys: [],
         searchDepart: '',
@@ -321,7 +367,26 @@
           });
       };
 
+      const { apiUrl } = useGlobSetting();
+      const [register3, { openModal: openModal3 }] = useModal();
+      const handleImport = () => {
+        myData.loading = true;
+        importTemplate()
+          .then((res) => {
+            myData.loading = false;
+            const data: UploadModel = {
+              fileName: res,
+              uploadUrl: apiUrl + '/system/user/importData',
+            };
+            openModal3(true, data);
+          })
+          .catch(() => {
+            myData.loading = false;
+          });
+      };
+
       return {
+        hasPermission,
         handleStatusChange,
         handleExport,
         handleReload,
@@ -337,6 +402,8 @@
         handleDelete,
         register1,
         register2,
+        register3,
+        handleImport,
       };
     },
   });
