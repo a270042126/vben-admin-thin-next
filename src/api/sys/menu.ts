@@ -44,8 +44,8 @@ export const exportMenu = (params: BasicParams) => {
   return defHttp.get<string>({ url: Api.menu + '/export', params });
 };
 
-export const getRouteMenuList = () => {
-  return defHttp.get<MenuModel[]>({ url: Api.MenuList });
+export const getRouteMenuList = (params?: BasicParams) => {
+  return defHttp.get<MenuModel[]>({ url: Api.MenuList, params });
 };
 
 export const getTreeSelect = () => {
