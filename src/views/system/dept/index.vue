@@ -1,50 +1,70 @@
 <template>
-  <PageWrapper contentClass="flex items-start">
+  <PageWrapper v-loading="loading" contentClass="flex items-start">
     <card class="my-card">
       <Form :model="queryParams" ref="formRef" layout="horizontal" class="m-form">
-        <FormItem label="菜单名称" name="menuName">
+        <FormItem label="部门名称" name="deptName">
           <Input
-            v-model:value="queryParams.menuName"
+            v-model:value="queryParams.deptName"
             allowClear
-            placeholder="请输入菜单名称"
+            placeholder="请输入部门名称"
             :onPressEnter="handleReload"
           />
         </FormItem>
-        <FormItem label="菜单状态" name="status">
+        <FormItem label="部门状态" name="status">
           <Select
             v-model:value="queryParams.status"
-            placeholder="请选择菜单状态"
+            placeholder="请选择部门状态"
             :allowClear="true"
             :onPressEnter="handleReload"
           >
-            <SelectOption value="0">显示</SelectOption>
-            <SelectOption value="1">隐藏</SelectOption>
+            <SelectOption value="0">正常</SelectOption>
+            <SelectOption value="1">停用</SelectOption>
           </Select>
         </FormItem>
         <a-button type="primary" class="ml-4" @click="handleReload">搜索</a-button>
         <a-button class="ml-4" @click="resetQuery">重置</a-button>
       </Form>
       <div class="flex mb-4 mt-2">
-        <a-button type="primary" class="mr-4" @click="handleEdit()">
+        <a-button
+          v-if="hasPermission('system:dept:add')"
+          type="primary"
+          class="mr-4"
+          @click="handleEdit()"
+        >
           <Icon icon="ant-design:file-add-outlined" />添加</a-button
         >
-        <a-button v-if="false" type="primary" class="ml-4" @click="handleExport()">
+        <Popconfirm
+          v-if="hasPermission('system:dept:remove')"
+          title="您确定删除吗"
+          @confirm="handleDelete"
+        >
+          <a-button type="primary" danger><Icon icon="ic:outline-delete-outline" />删除</a-button>
+        </Popconfirm>
+        <a-button
+          v-if="hasPermission('system:dept:export')"
+          type="primary"
+          class="ml-4"
+          @click="handleExport()"
+        >
           <Icon icon="ant-design:vertical-align-bottom-outlined" />导出</a-button
         >
       </div>
       <BasicTable @register="registerTable">
-        <template #icon="{ record }">
-          <Icon :icon="record.icon" />
-        </template>
-        <template #status="{ record }">
-          {{ record.status === '0' ? '正常' : '停用' }}
-        </template>
         <template #action="{ record }">
           <div>
-            <a-button type="link" class="text-btn" @click="handleEdit(record)">
+            <a-button
+              v-if="hasPermission('system:dept:edit')"
+              type="link"
+              class="text-btn"
+              @click="handleEdit(record)"
+            >
               <Icon icon="ant-design:edit-filled" />编辑
             </a-button>
-            <Popconfirm title="您确定删除吗" @confirm="handleDelete(record)">
+            <Popconfirm
+              v-if="hasPermission('system:dept:remove')"
+              title="您确定删除吗"
+              @confirm="handleDelete(record)"
+            >
               <a-button type="link" danger class="text-btn">
                 <Icon icon="ic:outline-delete-outline" />删除
               </a-button>
@@ -58,6 +78,7 @@
 </template>
 
 <script lang="ts">
+  import { usePermission } from '/@/hooks/web/usePermission';
   import { defineComponent, reactive, toRefs } from 'vue';
   import { Form, Input, Card, Popconfirm, message, Select, SelectOption } from 'ant-design-vue';
   import { PageWrapper } from '/@/components/Page';
@@ -66,12 +87,10 @@
   import AuData from './components/AuData.vue';
   import { useModal } from '/@/components/Modal';
   import { BasicData } from '/@/api/model/baseModel';
-  import { getRouteMenuList, delMenu, exportMenu } from '/@/api/sys/menu';
-  import { MenuModel } from '/@/api/sys/model/menuModel';
+  import { getDeptList, delDept, exportDept } from '/@/api/sys/dept';
+  import { DeptModel } from '/@/api/sys/model/departModel';
   import { useSelect } from '/@/hooks/component/useSelect';
   import { download, handleTree, handleChildren } from '/@/utils';
-  // import { getDicts } from '/@/api/sys/dict';
-  // import { selectDictLabel, DictDataModel } from '/@/utils'
 
   type DataModel = BasicData;
 
@@ -90,35 +109,33 @@
       AuData,
     },
     setup() {
+      const { hasPermission } = usePermission();
       const myData = reactive<DataModel>({
         queryParams: {},
+        loading: false,
       });
 
       const columns: BasicColumn[] = [
-        { title: '菜单名称', dataIndex: 'menuName', width: 240 },
-        { title: '菜单图标', dataIndex: 'icon', slots: { customRender: 'icon' }, width: 110 },
-        { title: '权限标识', dataIndex: 'perms', width: 200 },
-        { title: '路由地址', dataIndex: 'path', width: 110 },
-        { title: '组件路径', dataIndex: 'component', width: 200 },
-        { title: '菜单类型', dataIndex: 'menuType', width: 110 },
-        { title: '菜单状态', dataIndex: 'status', slots: { customRender: 'status' }, width: 110 },
-        { title: '排序', dataIndex: 'orderNum', width: 110 },
-        { title: '备注', dataIndex: 'remark', width: 110 },
+        { title: '部门名称', dataIndex: 'deptName', width: 200 },
+        { title: '部门状态', dataIndex: 'status', width: 110 },
+        { title: '显示顺序', dataIndex: 'orderNum', width: 110 },
+        { title: '创建时间', dataIndex: 'createTime', width: 200 },
         { title: '操作', dataIndex: 'action', slots: { customRender: 'action' }, width: 250 },
       ];
 
-      const [registerTable, { reload, setLoading }] = useTable({
+      const [registerTable, { reload, getSelectRowKeys, setLoading }] = useTable({
         columns: columns,
-        rowKey: 'menuId',
+        rowKey: 'deptId',
         bordered: true,
-        api: getRouteMenuList,
+        api: getDeptList,
         showTableSetting: true,
         showIndexColumn: false,
+        rowSelection: { type: 'checkbox' },
         beforeFetch: () => {
           return myData.queryParams;
         },
         afterFetch: (val) => {
-          const list = handleTree(val, 'menuId');
+          const list = handleTree(val, 'deptId');
           handleChildren(list);
           return list;
         },
@@ -126,19 +143,19 @@
 
       const [register1, { openModal: openModal1, setModalProps: setModalProps1 }] = useModal();
 
-      const handleEdit = (row: MenuModel) => {
+      const handleEdit = (row: DeptModel) => {
         if (row) {
-          setModalProps1({ title: '修改菜单权限' });
+          setModalProps1({ title: '修改部门' });
         } else {
           row = {};
-          setModalProps1({ title: '添加菜单权限' });
+          setModalProps1({ title: '添加部门' });
         }
         openModal1(true, row);
       };
 
       const handleExport = () => {
         setLoading(true);
-        exportMenu(myData.queryParams)
+        exportDept(myData.queryParams)
           .then((res) => {
             setLoading(false);
             download(res);
@@ -150,10 +167,10 @@
       const handleReload = () => {
         reload({ page: 1 });
       };
-      const handleDelete = (row: MenuModel) => {
+      const handleDelete = (row: DeptModel) => {
         setLoading(false);
-        const ids = row.menuId;
-        delMenu(ids)
+        const ids = row.deptId || getSelectRowKeys();
+        delDept(ids)
           .then(() => {
             message.success('删除成功');
             reload();
@@ -168,6 +185,7 @@
       };
       const { filterOption } = useSelect();
       return {
+        hasPermission,
         reload,
         handleExport,
         handleEdit,

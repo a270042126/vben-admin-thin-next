@@ -59,7 +59,10 @@
   const rules = {
     roleName: [{ required: true, message: '角色名称不能为空', trigger: 'blur' }],
     roleKey: [{ required: true, message: '角色权限字符串不能为空', trigger: 'blur' }],
-    roleSort: [{ required: true, message: '显示顺序不能为空', trigger: 'blur' }],
+    roleSort: [
+      { required: true, message: '显示顺序不能为空', trigger: 'blur' },
+      { pattern: /^-?[1-9]\d*$/, message: '只能输入整数', trigger: 'blur' },
+    ],
     status: [{ required: true, message: '角色状态不能为空', trigger: 'blur' }],
   };
 
@@ -85,6 +88,7 @@
         checkStrictly: false,
       });
       const [register, { closeModal, changeLoading }] = useModalInner((data: RoleModel) => {
+        formRef.value.resetFields();
         myData.form = {};
         myData.checkedKeys = [];
         const id = data.roleId ? data.roleId : null;

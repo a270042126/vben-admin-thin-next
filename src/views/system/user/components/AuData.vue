@@ -154,6 +154,7 @@
         }
       });
       const [register, { closeModal, changeLoading }] = useModalInner((data: UserModel) => {
+        formRef.value.resetFields();
         myData.form = {
           departIds: [],
           postIds: [],

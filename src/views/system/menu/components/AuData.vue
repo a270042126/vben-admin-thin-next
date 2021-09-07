@@ -1,7 +1,7 @@
 <template>
   <BasicModal v-bind="$attrs" title="菜单权限" width="700px" @register="register" @ok="onSubmit">
-    <Form :model="form" :rules="rules" ref="formRef" layout="horizontal" class="menu-form">
-      <FormItem label="上级菜单" name="menuName">
+    <Form :model="form" :rules="rules" ref="formRef" layout="horizontal" class="m-form2">
+      <FormItem label="上级菜单" name="parentId">
         <TreeSelect
           showSearch
           allowClear
@@ -23,7 +23,7 @@
           <Radio value="F">按钮</Radio>
         </RadioGroup>
       </FormItem>
-      <FormItem label="菜单图标" name="icon">
+      <FormItem v-if="form.menuType === 'M' || form.menuType === 'C'" label="菜单图标" name="icon">
         <Input v-model:value="form.icon" placeholder="请输入菜单图标" />
       </FormItem>
       <div class="flex">
@@ -113,6 +113,11 @@
 
   const rules = {
     menuName: [{ required: true, message: '菜单名称不能为空', trigger: 'blur' }],
+    orderNum: [
+      { required: true, message: '显示排序不能为空', trigger: 'blur' },
+      { pattern: /^-?[1-9]\d*$/, message: '只能输入整数', trigger: 'blur' },
+    ],
+    path: [{ required: true, message: '路由地址不能为空', trigger: 'blur' }],
   };
 
   export default defineComponent({
@@ -137,9 +142,9 @@
         menuOptions: [],
       });
       const [register, { closeModal, changeLoading }] = useModalInner((data: MenuModel) => {
+        formRef.value.resetFields();
         getRouteMenuList().then((res) => {
           myData.menuOptions = handleTree(res, 'menuId');
-          console.log(myData.menuOptions);
         });
         myData.form = {
           menuType: 'M',
@@ -211,15 +216,3 @@
     },
   });
 </script>
-
-<style lang="less" scoped>
-  .menu-form {
-    ::v-deep .ant-form-item {
-      display: flex;
-
-      .ant-form-item-label {
-        width: 100px;
-      }
-    }
-  }
-</style>
