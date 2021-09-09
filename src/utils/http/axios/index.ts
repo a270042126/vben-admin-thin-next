@@ -92,9 +92,29 @@ const transform: AxiosTransform = {
     const data = config.data || false;
     formatDate && data && !isString(data) && formatRequestDate(data);
     if (config.method?.toUpperCase() === RequestEnum.GET) {
+      // get请求映射params参数
       if (!isString(params)) {
+        let url = config.url + '?';
+        for (const propName of Object.keys(params)) {
+          const value = params[propName];
+          const part = encodeURIComponent(propName) + '=';
+          if (value !== null && typeof value !== 'undefined') {
+            if (typeof value === 'object') {
+              for (const key of Object.keys(value)) {
+                const params = propName + '[' + key + ']';
+                const subPart = encodeURIComponent(params) + '=';
+                url += subPart + encodeURIComponent(value[key]) + '&';
+              }
+            } else {
+              url += part + encodeURIComponent(value) + '&';
+            }
+          }
+        }
+        url = url.slice(0, -1);
+        config.params = {};
+        config.url = url;
         // 给 get 请求加上时间戳参数，避免从缓存中拿数据。
-        config.params = Object.assign(params || {}, joinTimestamp(joinTime, false));
+        config.params = Object.assign({}, joinTimestamp(joinTime, false));
       } else {
         // 兼容restful风格
         config.url = config.url + params + `${joinTimestamp(joinTime, true)}`;

@@ -8,7 +8,7 @@
   import { getDictTypeOptions } from '/@/api/sys/dict';
 
   const columns: BasicColumn[] = [
-    { title: '字段列名', dataIndex: 'columnName', width: 110, fixed: 'left' },
+    { title: '字段列名', dataIndex: 'columnName', width: 250, fixed: 'left' },
     {
       title: '字段描述',
       dataIndex: 'columnComment',

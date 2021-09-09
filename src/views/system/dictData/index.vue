@@ -7,6 +7,7 @@
             v-model:value="queryParams.dictType"
             placeholder="请选择状态"
             :allowClear="true"
+            :filterOption="filterOption"
             :onPressEnter="handleReload"
           >
             <SelectOption v-for="(item, key) in typeOptions" :key="key" :value="item.dictType">
