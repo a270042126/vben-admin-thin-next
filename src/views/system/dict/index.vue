@@ -2,35 +2,62 @@
   <PageWrapper v-loading="loading" contentClass="flex items-start">
     <card class="my-card">
       <Form :model="queryParams" ref="formRef" layout="horizontal" class="m-form">
-        <FormItem label="角色名称" name="roleName">
+        <FormItem label="字典名称" name="dictName">
           <Input
-            v-model:value="queryParams.roleName"
+            v-model:value="queryParams.dictName"
             allowClear
-            placeholder="请输入角色名称"
+            placeholder="请输入字典名称"
             :onPressEnter="handleReload"
           />
+        </FormItem>
+        <FormItem label="字典类型" name="dictType">
+          <Input
+            v-model:value="queryParams.dictType"
+            allowClear
+            placeholder="请输入字典类型"
+            :onPressEnter="handleReload"
+          />
+        </FormItem>
+        <FormItem label="状态" name="status">
+          <Select
+            v-model:value="queryParams.status"
+            placeholder="请选择状态"
+            :allowClear="true"
+            :onPressEnter="handleReload"
+          >
+            <SelectOption value="0">正常</SelectOption>
+            <SelectOption value="1">停用</SelectOption>
+          </Select>
         </FormItem>
         <a-button type="primary" class="ml-4" @click="handleReload">搜索</a-button>
         <a-button class="ml-4" @click="resetQuery">重置</a-button>
       </Form>
-      <div class="flex mb-4 mt-2">
+      <div class="flex my-4">
         <a-button
-          v-if="hasPermission('system:role:add')"
+          v-if="hasPermission('system:type:add')"
           type="primary"
           class="mr-4"
           @click="handleEdit()"
         >
           <Icon icon="ant-design:file-add-outlined" />添加</a-button
         >
+        <a-button
+          v-if="hasPermission('system:type:remove')"
+          type="primary"
+          class="mr-4"
+          @click="handleRefreshCache()"
+        >
+          <Icon icon="ant-design:retweet-outlined" />刷新缓存</a-button
+        >
         <Popconfirm
-          v-if="hasPermission('system:role:remove')"
+          v-if="hasPermission('system:type:remove')"
           title="您确定删除吗"
           @confirm="handleDelete"
         >
           <a-button type="primary" danger><Icon icon="ic:outline-delete-outline" />删除</a-button>
         </Popconfirm>
         <a-button
-          v-if="hasPermission('system:role:export')"
+          v-if="hasPermission('system:type:export')"
           type="primary"
           class="ml-4"
           @click="handleExport()"
@@ -39,36 +66,26 @@
         >
       </div>
       <BasicTable @register="registerTable">
+        <template #dictType="{ record }">
+          <a-button type="link" class="text-btn" @click="gotoDictData(record.dictId)"
+            >{{ record.dictType }}
+          </a-button>
+        </template>
         <template #status="{ record }">
-          <Switch
-            :checked="record.status === '0'"
-            :onChange="
-              (val) => {
-                handleStatusChange(record, val);
-              }
-            "
-          />
+          {{ record.status === '0' ? '正常' : '停用' }}
         </template>
         <template #action="{ record }">
           <div>
             <a-button
-              v-if="hasPermission('system:role:edit')"
+              v-if="hasPermission('system:type:edit')"
               type="link"
               class="text-btn"
               @click="handleEdit(record)"
             >
               <Icon icon="ant-design:edit-filled" />编辑
             </a-button>
-            <a-button
-              v-if="hasPermission('system:role:edit')"
-              type="link"
-              class="text-btn"
-              @click="handleAllot(record)"
-            >
-              <Icon icon="ant-design:api-filled" />数据权限
-            </a-button>
             <Popconfirm
-              v-if="hasPermission('system:role:remove')"
+              v-if="hasPermission('system:type:remove')"
               title="您确定删除吗"
               @confirm="handleDelete(record)"
             >
@@ -81,30 +98,30 @@
       </BasicTable>
     </card>
     <AuData @register="register1" @onRefresh="reload" />
-    <Allot @register="register2" />
   </PageWrapper>
 </template>
 
 <script lang="ts">
-  import { defineComponent, reactive, toRefs } from 'vue';
-  import { Form, Input, Card, Popconfirm, Switch, message } from 'ant-design-vue';
   import { usePermission } from '/@/hooks/web/usePermission';
+  import { defineComponent, reactive, toRefs } from 'vue';
+  import { Form, Input, Card, Popconfirm, message, Select, SelectOption } from 'ant-design-vue';
   import { PageWrapper } from '/@/components/Page';
   import { BasicTable, BasicColumn, useTable } from '/@/components/Table';
   import { Icon } from '/@/components/Icon';
   import AuData from './components/AuData.vue';
   import { useModal } from '/@/components/Modal';
   import { BasicData } from '/@/api/model/baseModel';
-  import { getRoleList, delRole, changeStatus, exportRole } from '/@/api/sys/role';
-  import { RoleModel } from '/@/api/sys/model/roleModel';
+  import { getTypeList, delType, exportType, refreshCache } from '/@/api/sys/dict';
+  import { DictTypeModel } from '/@/api/sys/model/dictModel';
   import { useSelect } from '/@/hooks/component/useSelect';
   import { download } from '/@/utils';
-  import Allot from './components/Allot.vue';
+  import { useGo } from '/@/hooks/web/usePage';
+  import { PageEnum } from '/@/enums/pageEnum';
 
   type DataModel = BasicData;
 
   export default defineComponent({
-    name: 'Role',
+    name: 'Dict',
     components: {
       PageWrapper,
       Form,
@@ -114,9 +131,9 @@
       BasicTable,
       Icon,
       Popconfirm,
+      Select,
+      SelectOption,
       AuData,
-      Switch,
-      Allot,
     },
     setup() {
       const { hasPermission } = usePermission();
@@ -126,21 +143,25 @@
       });
 
       const columns: BasicColumn[] = [
-        { title: '角色ID', dataIndex: 'roleId', width: 110 },
-        { title: '角色名称', dataIndex: 'roleName', width: 110 },
-        { title: '权限字符', dataIndex: 'roleKey', width: 150 },
-        { title: '显示顺序', dataIndex: 'roleSort', width: 110 },
-        { title: '角色状态', dataIndex: 'status', slots: { customRender: 'status' }, width: 200 },
+        { title: '字典名称', dataIndex: 'dictName', width: 110 },
+        {
+          title: '字典类型',
+          dataIndex: 'dictType',
+          slots: { customRender: 'dictType' },
+          width: 200,
+        },
+        { title: '状态', dataIndex: 'status', slots: { customRender: 'status' }, width: 110 },
         { title: '备注', dataIndex: 'remark', width: 110 },
         { title: '操作', dataIndex: 'action', slots: { customRender: 'action' }, width: 250 },
       ];
 
       const [registerTable, { reload, getSelectRowKeys, setLoading }] = useTable({
         columns: columns,
-        rowKey: 'roleId',
+        rowKey: 'dictId',
         bordered: true,
-        api: getRoleList,
+        api: getTypeList,
         showTableSetting: true,
+        clickToRowSelect: false,
         rowSelection: { type: 'checkbox' },
         beforeFetch: () => {
           return myData.queryParams;
@@ -148,71 +169,69 @@
       });
 
       const [register1, { openModal: openModal1, setModalProps: setModalProps1 }] = useModal();
-      const handleEdit = (row: RoleModel) => {
+
+      const handleEdit = (row: DictTypeModel) => {
         if (row) {
-          setModalProps1({ title: '修改角色信息' });
+          setModalProps1({ title: '修改字典类型' });
         } else {
           row = {};
-          setModalProps1({ title: '添加角色信息' });
+          setModalProps1({ title: '添加字典类型' });
         }
         openModal1(true, row);
       };
 
-      const [register2, { openModal: openModal2 }] = useModal();
-      const handleAllot = (row: RoleModel) => {
-        openModal2(true, row);
-      };
-
-      const handleStatusChange = (row: RoleModel, val: boolean) => {
-        row.status = val ? '0' : '1';
-        setLoading(true);
-        changeStatus(row)
-          .then(() => {
-            setLoading(false);
-            reload();
-          })
-          .catch(() => {
-            row.status = !val ? '0' : '1';
-            setLoading(false);
-          });
-      };
-
       const handleExport = () => {
-        myData.loading = true;
-        exportRole(myData.queryParams)
+        setLoading(true);
+        exportType(myData.queryParams)
           .then((res) => {
-            myData.loading = false;
+            setLoading(false);
             download(res);
           })
           .catch(() => {
-            myData.loading = false;
+            setLoading(false);
           });
       };
       const handleReload = () => {
         reload({ page: 1 });
       };
-      const handleDelete = (row: RoleModel) => {
-        myData.loading = true;
-        const ids = row.roleId || getSelectRowKeys();
-        delRole(ids)
+      const handleDelete = (row: DictTypeModel) => {
+        setLoading(false);
+        const ids = row.dictId || getSelectRowKeys();
+        delType(ids)
           .then(() => {
             message.success('删除成功');
             reload();
-            myData.loading = false;
           })
           .catch(() => {
-            myData.loading = false;
+            setLoading(false);
           });
       };
       const resetQuery = () => {
         myData.queryParams = {};
         handleReload();
       };
+
+      const handleRefreshCache = () => {
+        setLoading(true);
+        refreshCache()
+          .then(() => {
+            message.success('刷新缓存成功');
+            setLoading(false);
+          })
+          .catch(() => {
+            setLoading(false);
+          });
+      };
+
+      const go = useGo();
+      const gotoDictData = (dictId: number) => {
+        console.log(dictId);
+        go(`${PageEnum.DICT_DATA_TABLE}${dictId}`);
+      };
+
       const { filterOption } = useSelect();
       return {
         hasPermission,
-        handleAllot,
-        handleStatusChange,
         reload,
         handleExport,
         handleEdit,
@@ -223,7 +242,8 @@
         resetQuery,
         filterOption,
         register1,
-        register2,
+        gotoDictData,
+        handleRefreshCache,
       };
     },
   });

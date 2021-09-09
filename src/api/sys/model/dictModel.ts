@@ -1,3 +1,4 @@
+import type { BasicFetchResult } from '/@/api/model/baseModel';
 export interface DictTypeModel {
   /** 字典主键 */
   dictId?: number;
@@ -6,8 +7,9 @@ export interface DictTypeModel {
   /** 字典类型 */
   dictType?: string;
   /** 状态（0正常 1停用） */
-  status: string;
+  status?: string;
 }
+export type TypeListModel = BasicFetchResult<DictTypeModel>;
 
 export interface DictDataModel {
   /** 字典编码 */
@@ -29,3 +31,5 @@ export interface DictDataModel {
   /** 状态（0正常 1停用） */
   status?: string;
 }
+
+export type DataListModel = BasicFetchResult<DictDataModel[]>;

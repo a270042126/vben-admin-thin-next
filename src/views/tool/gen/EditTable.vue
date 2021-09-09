@@ -39,8 +39,7 @@
   import bus from '/@/bus';
 
   export default defineComponent({
-    // eslint-disable-next-line vue/component-definition-name-casing
-    name: 'gen/edit/:tableId(\d+)',
+    name: 'GenItems',
     components: {
       PageWrapper,
       Card,

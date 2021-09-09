@@ -23,7 +23,7 @@ export interface DeptModel {
   delFlag?: string | null;
 }
 
-export type DeptListModel = BasicFetchResult<DeptModel[]>;
+export type DeptListModel = BasicFetchResult<DeptModel>;
 
 export interface DepartTreeModel {
   id: number;

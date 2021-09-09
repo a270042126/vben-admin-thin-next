@@ -167,6 +167,7 @@
   ];
 
   export default defineComponent({
+    name: 'User',
     components: {
       PageWrapper,
       Form,

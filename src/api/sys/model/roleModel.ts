@@ -22,4 +22,4 @@ export interface RoleModel {
   deptIds?: number[];
 }
 
-export type RoleListModel = BasicFetchResult<RoleModel[]>;
+export type RoleListModel = BasicFetchResult<RoleModel>;

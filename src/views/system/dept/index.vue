@@ -95,6 +95,7 @@
   type DataModel = BasicData;
 
   export default defineComponent({
+    name: 'Dept',
     components: {
       PageWrapper,
       Form,

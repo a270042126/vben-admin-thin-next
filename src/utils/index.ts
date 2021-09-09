@@ -152,6 +152,10 @@ export function setRouterMeta(routers: Recordable[]) {
         hideMenu: item.hidden,
       };
     }
+    if (item.name.indexOf('/') > -1) {
+      const arr = item.name.split('/');
+      item.name = arr[0] + 'Items';
+    }
     if (item.children) {
       setRouterMeta(item.children);
     }

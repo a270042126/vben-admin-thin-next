@@ -151,6 +151,7 @@
           isFrame: '1',
           visible: '0',
           status: '0',
+          isCache: '0',
         };
         const id = data.menuId ? data.menuId : null;
         if (id) {

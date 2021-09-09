@@ -11,4 +11,6 @@ export enum PageEnum {
   EDIT_TABLE = '/tool/gen/edit/',
   // 生成代码
   GEN_TABLE = '/tool/gen',
+  // 字典数据
+  DICT_DATA_TABLE = '/system/dict/',
 }
