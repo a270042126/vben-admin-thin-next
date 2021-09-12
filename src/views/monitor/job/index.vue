@@ -2,51 +2,66 @@
   <PageWrapper v-loading="loading" contentClass="flex items-start">
     <card class="my-card">
       <Form :model="queryParams" ref="formRef" layout="horizontal" class="m-form">
-        <FormItem label="部门名称" name="deptName">
+        <FormItem label="任务名称" name="jobName">
           <Input
-            v-model:value="queryParams.deptName"
+            v-model:value="queryParams.jobName"
             allowClear
-            placeholder="请输入部门名称"
+            placeholder="请输入任务名称"
             :onPressEnter="handleReload"
           />
         </FormItem>
-        <FormItem label="部门状态" name="status">
+        <FormItem label="任务组名" name="jobGroup">
+          <Input
+            v-model:value="queryParams.jobGroup"
+            allowClear
+            placeholder="请输入任务组名"
+            :onPressEnter="handleReload"
+          />
+        </FormItem>
+        <FormItem label="状态" name="status">
           <Select
             v-model:value="queryParams.status"
-            placeholder="请选择部门状态"
+            placeholder="请选择状态"
             :allowClear="true"
             :onPressEnter="handleReload"
           >
             <SelectOption value="0">正常</SelectOption>
-            <SelectOption value="1">停用</SelectOption>
+            <SelectOption value="1">暂停</SelectOption>
           </Select>
         </FormItem>
         <a-button type="primary" class="ml-4" @click="handleReload">搜索</a-button>
         <a-button class="ml-4" @click="resetQuery">重置</a-button>
       </Form>
-      <div class="flex mb-4 mt-2">
+      <div class="flex my-4">
         <a-button
-          v-if="hasPermission('system:dept:add')"
+          v-if="hasPermission('monitor:job:add')"
           type="primary"
           class="mr-4"
           @click="handleEdit()"
         >
           <Icon icon="ant-design:file-add-outlined" />添加</a-button
         >
-        <a-button
-          v-if="hasPermission('system:dept:export')"
-          type="primary"
-          class="ml-4"
-          @click="handleExport()"
+        <Popconfirm
+          v-if="hasPermission('monitor:job:remove')"
+          title="您确定删除吗"
+          @confirm="handleDelete"
         >
-          <Icon icon="ant-design:vertical-align-bottom-outlined" />导出</a-button
-        >
+          <a-button type="primary" danger><Icon icon="ic:outline-delete-outline" />删除</a-button>
+        </Popconfirm>
       </div>
       <BasicTable @register="registerTable">
         <template #action="{ record }">
           <div>
             <a-button
-              v-if="hasPermission('system:dept:edit')"
+              v-if="hasPermission('monitor:job:query')"
+              type="link"
+              class="text-btn"
+              @click="handleLogShow(record)"
+            >
+              <Icon icon="ant-design:edit-filled" />调度日志
+            </a-button>
+            <a-button
+              v-if="hasPermission('monitor:job:edit')"
               type="link"
               class="text-btn"
               @click="handleEdit(record)"
@@ -54,7 +69,7 @@
               <Icon icon="ant-design:edit-filled" />编辑
             </a-button>
             <Popconfirm
-              v-if="hasPermission('system:dept:remove')"
+              v-if="hasPermission('monitor:job:remove')"
               title="您确定删除吗"
               @confirm="handleDelete(record)"
             >
@@ -80,15 +95,16 @@
   import AuData from './components/AuData.vue';
   import { useModal } from '/@/components/Modal';
   import { BasicData } from '/@/api/model/baseModel';
-  import { getDeptList, delDept, exportDept } from '/@/api/sys/dept';
-  import { DeptModel } from '/@/api/sys/model/departModel';
+  import { getJobList, delJob } from '/@/api/monitor/job';
+  import { JobModel } from '/@/api/monitor/model/jobModel';
   import { useSelect } from '/@/hooks/component/useSelect';
-  import { download, handleTree, handleChildren } from '/@/utils';
+  import { useGo } from '/@/hooks/web/usePage';
+  import { PageEnum } from '/@/enums/pageEnum';
 
   type DataModel = BasicData;
 
   export default defineComponent({
-    name: 'Dept',
+    name: 'Job',
     components: {
       PageWrapper,
       Form,
@@ -110,68 +126,52 @@
       });
 
       const columns: BasicColumn[] = [
-        { title: '部门名称', dataIndex: 'deptName', width: 200 },
+        { title: '任务名称', dataIndex: 'jobName', width: 150 },
+        { title: '任务组名', dataIndex: 'jobGroup', width: 110 },
+        { title: '调用目标字符串', dataIndex: 'invokeTarget', width: 150 },
+        { title: 'cron执行表达式', dataIndex: 'cronExpression', width: 200 },
         {
           title: '状态',
           dataIndex: 'status',
           format: (text: string) => {
-            return text == '0' ? '正常' : '停止';
+            return text == '0' ? '正常' : '暂停';
           },
           width: 110,
         },
-        { title: '显示顺序', dataIndex: 'orderNum', width: 110 },
-        { title: '创建时间', dataIndex: 'createTime', width: 200 },
         { title: '操作', dataIndex: 'action', slots: { customRender: 'action' }, width: 250 },
       ];
 
       const [registerTable, { reload, getSelectRowKeys, setLoading }] = useTable({
         columns: columns,
-        rowKey: 'deptId',
+        rowKey: 'jobId',
         bordered: true,
-        api: getDeptList,
+        api: getJobList,
         showTableSetting: true,
-        showIndexColumn: false,
+        clickToRowSelect: false,
         rowSelection: { type: 'checkbox' },
         beforeFetch: () => {
           return myData.queryParams;
-        },
-        afterFetch: (val) => {
-          const list = handleTree(val, 'deptId');
-          handleChildren(list);
-          return list;
         },
       });
 
       const [register1, { openModal: openModal1, setModalProps: setModalProps1 }] = useModal();
 
-      const handleEdit = (row: DeptModel) => {
+      const handleEdit = (row: JobModel) => {
         if (row) {
-          setModalProps1({ title: '修改部门' });
+          setModalProps1({ title: '修改定时任务调度' });
         } else {
           row = {};
-          setModalProps1({ title: '添加部门' });
+          setModalProps1({ title: '添加定时任务调度' });
         }
         openModal1(true, row);
-      };
-
-      const handleExport = () => {
-        setLoading(true);
-        exportDept(myData.queryParams)
-          .then((res) => {
-            setLoading(false);
-            download(res);
-          })
-          .catch(() => {
-            setLoading(false);
-          });
       };
       const handleReload = () => {
         reload({ page: 1 });
       };
-      const handleDelete = (row: DeptModel) => {
-        setLoading(false);
-        const ids = row.deptId || getSelectRowKeys();
-        delDept(ids)
+      const handleDelete = (row: JobModel) => {
+        setLoading(true);
+        const ids = row.jobId || getSelectRowKeys();
+        delJob(ids)
           .then(() => {
             message.success('删除成功');
             reload();
@@ -184,11 +184,16 @@
         myData.queryParams = {};
         handleReload();
       };
+
+      const go = useGo();
+      const handleLogShow = (row: JobModel) => {
+        go(`${PageEnum.JOB_LOG_TABLE}${row.jobId}`);
+      };
+
       const { filterOption } = useSelect();
       return {
         hasPermission,
         reload,
-        handleExport,
         handleEdit,
         handleDelete,
         handleReload,
@@ -197,6 +202,7 @@
         resetQuery,
         filterOption,
         register1,
+        handleLogShow,
       };
     },
   });

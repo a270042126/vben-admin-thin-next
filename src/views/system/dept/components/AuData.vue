@@ -93,7 +93,7 @@
           status: '0',
         };
         getDeptList().then((res) => {
-          myData.deptOptions = handleTree(res, 'deptId');
+          myData.deptOptions = handleTree(res as any, 'deptId');
         });
         const id = data.deptId ? data.deptId : null;
         if (id) {
@@ -132,7 +132,7 @@
           addDept(form)
             .then(() => {
               changeLoading(false);
-              message.success('修改成功');
+              message.success('添加成功');
               context.emit('onRefresh');
               closeModal();
             })

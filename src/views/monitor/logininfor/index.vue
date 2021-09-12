@@ -2,43 +2,26 @@
   <PageWrapper v-loading="loading" contentClass="flex items-start">
     <card class="my-card">
       <Form :model="queryParams" ref="formRef" layout="horizontal" class="m-form">
-        <FormItem label="系统模块" name="title">
+        <FormItem label="用户账号" name="userName">
           <Input
-            v-model:value="queryParams.title"
+            v-model:value="queryParams.userName"
             allowClear
-            placeholder="请输入模块标题"
+            placeholder="请输入用户账号"
             :onPressEnter="handleReload"
           />
         </FormItem>
-        <FormItem label="业务类型" name="businessType">
-          <Select
-            v-model:value="queryParams.businessType"
-            placeholder="请选择业务类型"
-            :allowClear="true"
-            :filterOption="filterOption"
-            :onPressEnter="handleReload"
-          >
-            <SelectOption
-              v-for="(item, key) in businessTypeOptions"
-              :key="key"
-              :value="item.dictValue"
-            >
-              {{ item.dictLabel }}
-            </SelectOption>
-          </Select>
-        </FormItem>
-        <FormItem label="操作人员" name="operName">
+        <FormItem label="登录IP地址" name="ipaddr">
           <Input
-            v-model:value="queryParams.operName"
+            v-model:value="queryParams.ipaddr"
             allowClear
-            placeholder="请输入操作人员"
+            placeholder="请输入登录IP地址"
             :onPressEnter="handleReload"
           />
         </FormItem>
-        <FormItem label="操作状态" name="status">
+        <FormItem label="登录状态" name="status">
           <Select
             v-model:value="queryParams.status"
-            placeholder="请选择操作状态"
+            placeholder="请选择登录状态"
             :allowClear="true"
             :onPressEnter="handleReload"
           >
@@ -46,22 +29,22 @@
             <SelectOption value="1">失败</SelectOption>
           </Select>
         </FormItem>
-        <FormItem label="操作时间" name="operTime">
-          <RangePicker v-model:value="daterangeOperTime" format="YYYY-MM-DD" />
+        <FormItem label="访问时间" name="loginTime">
+          <RangePicker v-model:value="daterangeLoginTime" />
         </FormItem>
         <a-button type="primary" class="ml-4" @click="handleReload">搜索</a-button>
         <a-button class="ml-4" @click="resetQuery">重置</a-button>
       </Form>
       <div class="flex my-4">
         <Popconfirm
-          v-if="hasPermission('monitor:operLog:remove')"
+          v-if="hasPermission('monitor:logininfor:remove')"
           title="您确定删除吗"
           @confirm="handleDelete"
         >
           <a-button type="primary" danger><Icon icon="ic:outline-delete-outline" />删除</a-button>
         </Popconfirm>
         <Popconfirm
-          v-if="hasPermission('monitor:operLog:remove')"
+          v-if="hasPermission('monitor:logininfor:remove')"
           title="您确定清空吗"
           @confirm="handleClean"
         >
@@ -70,7 +53,7 @@
           >
         </Popconfirm>
         <a-button
-          v-if="hasPermission('monitor:operLog:export')"
+          v-if="hasPermission('monitor:logininfor:export')"
           type="primary"
           class="ml-4"
           @click="handleExport()"
@@ -78,22 +61,8 @@
           <Icon icon="ant-design:vertical-align-bottom-outlined" />导出</a-button
         >
       </div>
-      <BasicTable @register="registerTable">
-        <template #action="{ record }">
-          <div>
-            <a-button
-              v-if="hasPermission('monitor:operLog:query')"
-              type="link"
-              class="text-btn"
-              @click="handleDetailShow(record)"
-            >
-              <Icon icon="ant-design:eye-filled" />详细
-            </a-button>
-          </div>
-        </template>
-      </BasicTable>
+      <BasicTable @register="registerTable" />
     </card>
-    <detail @register="register1" />
   </PageWrapper>
 </template>
 
@@ -114,24 +83,24 @@
   import { BasicTable, BasicColumn, useTable } from '/@/components/Table';
   import { Icon } from '/@/components/Icon';
   import { BasicData } from '/@/api/model/baseModel';
-  import { getOperLogList, delOperLog, exportOperLog, clean } from '/@/api/monitor/operLog';
-  import { OperLogModel } from '/@/api/monitor/model/operLogModel';
+  import {
+    getLogininforList,
+    delLogininfor,
+    exportLogininfor,
+    clean,
+  } from '/@/api/monitor/logininfor';
+  import { LogininforModel } from '/@/api/monitor/model/logininforModel';
   import { useSelect } from '/@/hooks/component/useSelect';
-  import { getDicts } from '/@/api/sys/dict';
-  import { selectDictLabel, download } from '/@/utils';
+  import { download } from '/@/utils';
   import { formatToDate } from '/@/utils/dateUtil';
-  import { DictDataModel } from '/@/api/sys/model/dictModel';
-  import { useModal } from '/@/components/Modal';
-  import Detail from './components/Detail.vue';
 
   interface DataModel extends BasicData {
-    // 操作时间时间范围
-    daterangeOperTime: Date[];
-    businessTypeOptions: DictDataModel[];
+    // 访问时间时间范围
+    daterangeLoginTime: Date[];
   }
 
   export default defineComponent({
-    name: 'OperLog',
+    name: 'Logininfor',
     components: {
       PageWrapper,
       Form,
@@ -144,69 +113,57 @@
       Select,
       SelectOption,
       RangePicker,
-      Detail,
     },
     setup() {
       const { hasPermission } = usePermission();
       const myData = reactive<DataModel>({
         queryParams: {},
         loading: false,
-        // 操作时间时间范围
-        daterangeOperTime: [],
-        businessTypeOptions: [],
+        // 访问时间时间范围
+        daterangeLoginTime: [],
       });
 
       const columns: BasicColumn[] = [
-        { title: '系统模块', dataIndex: 'title', width: 110 },
+        { title: '用户账号', dataIndex: 'userName', width: 150 },
+        { title: '登录IP地址', dataIndex: 'ipaddr', width: 150 },
+        { title: '登录地点', dataIndex: 'loginLocation', width: 110 },
+        { title: '操作系统', dataIndex: 'os', width: 110 },
+        { title: '浏览器类型', dataIndex: 'browser', width: 110 },
         {
-          title: '操作类型',
-          dataIndex: 'businessType',
-          width: 110,
-          format: (text: string) => {
-            return selectDictLabel(myData.businessTypeOptions, text);
-          },
-        },
-        { title: '请求方式', dataIndex: 'requestMethod', width: 110 },
-        { title: '操作人员', dataIndex: 'operName', width: 110 },
-        { title: '主机地址', dataIndex: 'operIp', width: 110 },
-        { title: '操作地点', dataIndex: 'operLocation', width: 110 },
-        {
-          title: '操作状态',
+          title: '登录状态',
           dataIndex: 'status',
           width: 110,
           format: (text: string) => {
             return text == '0' ? '成功' : '失败';
           },
         },
-        { title: '操作时间', dataIndex: 'operTime', width: 200 },
-        { title: '操作', dataIndex: 'action', slots: { customRender: 'action' }, width: 110 },
+        { title: '提示消息', dataIndex: 'msg', width: 110 },
+        { title: '登录时间', dataIndex: 'loginTime', width: 180 },
       ];
 
       const [registerTable, { reload, getSelectRowKeys, setLoading }] = useTable({
         columns: columns,
-        rowKey: 'operId',
+        rowKey: 'infoId',
         bordered: true,
-        api: getOperLogList,
+        api: getLogininforList,
         showTableSetting: true,
         clickToRowSelect: false,
         rowSelection: { type: 'checkbox' },
         beforeFetch: () => {
           myData.queryParams.params = {};
-          if (myData.daterangeOperTime && myData.daterangeOperTime.length > 0) {
-            myData.queryParams.params['beginTime'] = formatToDate(myData.daterangeOperTime[0]);
-            myData.queryParams.params['endTime'] = formatToDate(myData.daterangeOperTime[1]);
+          if (myData.daterangeLoginTime && myData.daterangeLoginTime.length > 0) {
+            myData.queryParams.params['beginLoginTime'] = formatToDate(
+              myData.daterangeLoginTime[0]
+            );
+            myData.queryParams.params['endLoginTime'] = formatToDate(myData.daterangeLoginTime[1]);
           }
           return myData.queryParams;
         },
       });
 
-      getDicts('sys_oper_type').then((response) => {
-        myData.businessTypeOptions = response;
-      });
-
       const handleExport = () => {
         setLoading(true);
-        exportOperLog(myData.queryParams)
+        exportLogininfor(myData.queryParams)
           .then((res) => {
             setLoading(false);
             download(res);
@@ -218,10 +175,10 @@
       const handleReload = () => {
         reload({ page: 1 });
       };
-      const handleDelete = (row: OperLogModel) => {
+      const handleDelete = (row: LogininforModel) => {
         setLoading(true);
-        const ids = row.operId || getSelectRowKeys();
-        delOperLog(ids)
+        const ids = row.infoId || getSelectRowKeys();
+        delLogininfor(ids)
           .then(() => {
             message.success('删除成功');
             reload();
@@ -229,6 +186,10 @@
           .catch(() => {
             setLoading(false);
           });
+      };
+      const resetQuery = () => {
+        myData.queryParams = {};
+        handleReload();
       };
       const handleClean = () => {
         setLoading(true);
@@ -240,16 +201,6 @@
           .catch(() => {
             setLoading(false);
           });
-      };
-      const resetQuery = () => {
-        myData.queryParams = {};
-        myData.daterangeOperTime = [];
-        handleReload();
-      };
-
-      const [register1, { openModal: openModal1 }] = useModal();
-      const handleDetailShow = (row: OperLogModel) => {
-        openModal1(true, row);
       };
 
       const { filterOption } = useSelect();
@@ -264,8 +215,6 @@
         resetQuery,
         filterOption,
         handleClean,
-        handleDetailShow,
-        register1,
       };
     },
   });

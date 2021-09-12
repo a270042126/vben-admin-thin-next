@@ -1,6 +1,6 @@
 import { defHttp } from '/@/utils/http/axios';
 import { BasicParams } from '/@/api/model/baseModel';
-import { OperLogModel, OperLogListModel } from './model/operLogModel';
+import { OperLogModel, OperLogListModel } from '../monitor/model/operLogModel';
 enum Api {
   list = '/monitor/operlog/list',
   operLog = '/monitor/operlog',

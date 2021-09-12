@@ -2,39 +2,46 @@
   <PageWrapper v-loading="loading" contentClass="flex items-start">
     <card class="my-card">
       <Form :model="queryParams" ref="formRef" layout="horizontal" class="m-form">
-        <FormItem label="部门名称" name="deptName">
+        <FormItem label="任务名称" name="jobName">
           <Input
-            v-model:value="queryParams.deptName"
+            v-model:value="queryParams.jobName"
             allowClear
-            placeholder="请输入部门名称"
+            placeholder="请输入任务名称"
             :onPressEnter="handleReload"
           />
         </FormItem>
-        <FormItem label="部门状态" name="status">
+        <FormItem label="任务组名" name="jobGroup">
+          <Input
+            v-model:value="queryParams.jobGroup"
+            allowClear
+            placeholder="请输入任务组名"
+            :onPressEnter="handleReload"
+          />
+        </FormItem>
+        <FormItem label="执行状态" name="status">
           <Select
             v-model:value="queryParams.status"
-            placeholder="请选择部门状态"
+            placeholder="请选择执行状态"
             :allowClear="true"
             :onPressEnter="handleReload"
           >
-            <SelectOption value="0">正常</SelectOption>
-            <SelectOption value="1">停用</SelectOption>
+            <SelectOption value="0">成功</SelectOption>
+            <SelectOption value="1">失败</SelectOption>
           </Select>
         </FormItem>
         <a-button type="primary" class="ml-4" @click="handleReload">搜索</a-button>
         <a-button class="ml-4" @click="resetQuery">重置</a-button>
       </Form>
-      <div class="flex mb-4 mt-2">
-        <a-button
-          v-if="hasPermission('system:dept:add')"
-          type="primary"
-          class="mr-4"
-          @click="handleEdit()"
+      <div class="flex my-4">
+        <Popconfirm
+          v-if="hasPermission('monitor:log:remove')"
+          title="您确定删除吗"
+          @confirm="handleDelete"
         >
-          <Icon icon="ant-design:file-add-outlined" />添加</a-button
-        >
+          <a-button type="primary" danger><Icon icon="ic:outline-delete-outline" />删除</a-button>
+        </Popconfirm>
         <a-button
-          v-if="hasPermission('system:dept:export')"
+          v-if="hasPermission('monitor:log:export')"
           type="primary"
           class="ml-4"
           @click="handleExport()"
@@ -45,16 +52,8 @@
       <BasicTable @register="registerTable">
         <template #action="{ record }">
           <div>
-            <a-button
-              v-if="hasPermission('system:dept:edit')"
-              type="link"
-              class="text-btn"
-              @click="handleEdit(record)"
-            >
-              <Icon icon="ant-design:edit-filled" />编辑
-            </a-button>
             <Popconfirm
-              v-if="hasPermission('system:dept:remove')"
+              v-if="hasPermission('monitor:log:remove')"
               title="您确定删除吗"
               @confirm="handleDelete(record)"
             >
@@ -66,7 +65,6 @@
         </template>
       </BasicTable>
     </card>
-    <AuData @register="register1" @onRefresh="reload" />
   </PageWrapper>
 </template>
 
@@ -77,18 +75,16 @@
   import { PageWrapper } from '/@/components/Page';
   import { BasicTable, BasicColumn, useTable } from '/@/components/Table';
   import { Icon } from '/@/components/Icon';
-  import AuData from './components/AuData.vue';
-  import { useModal } from '/@/components/Modal';
   import { BasicData } from '/@/api/model/baseModel';
-  import { getDeptList, delDept, exportDept } from '/@/api/sys/dept';
-  import { DeptModel } from '/@/api/sys/model/departModel';
+  import { getLogList, delLog, exportLog } from '/@/api/monitor/jobLog';
+  import { JobLogModel } from '/@/api/monitor/model/jobLogModel';
   import { useSelect } from '/@/hooks/component/useSelect';
-  import { download, handleTree, handleChildren } from '/@/utils';
+  import { download } from '/@/utils';
 
   type DataModel = BasicData;
 
   export default defineComponent({
-    name: 'Dept',
+    name: 'Log',
     components: {
       PageWrapper,
       Form,
@@ -100,7 +96,6 @@
       Popconfirm,
       Select,
       SelectOption,
-      AuData,
     },
     setup() {
       const { hasPermission } = usePermission();
@@ -110,53 +105,39 @@
       });
 
       const columns: BasicColumn[] = [
-        { title: '部门名称', dataIndex: 'deptName', width: 200 },
+        { title: '任务名称', dataIndex: 'jobName', width: 110 },
+        { title: '任务组名', dataIndex: 'jobGroup', width: 110 },
+        { title: '调用目标字符串', dataIndex: 'invokeTarget', width: 110 },
+        { title: '日志信息', dataIndex: 'jobMessage', width: 110 },
         {
-          title: '状态',
+          title: '执行状态',
           dataIndex: 'status',
           format: (text: string) => {
-            return text == '0' ? '正常' : '停止';
+            return text == '0' ? '成功' : '失败';
           },
           width: 110,
         },
-        { title: '显示顺序', dataIndex: 'orderNum', width: 110 },
-        { title: '创建时间', dataIndex: 'createTime', width: 200 },
+        { title: '异常信息', dataIndex: 'exceptionInfo', width: 110 },
+        { title: '执行时间', dataIndex: 'createTime', width: 200 },
         { title: '操作', dataIndex: 'action', slots: { customRender: 'action' }, width: 250 },
       ];
 
       const [registerTable, { reload, getSelectRowKeys, setLoading }] = useTable({
         columns: columns,
-        rowKey: 'deptId',
+        rowKey: 'jobLogId',
         bordered: true,
-        api: getDeptList,
+        api: getLogList,
         showTableSetting: true,
-        showIndexColumn: false,
+        clickToRowSelect: false,
         rowSelection: { type: 'checkbox' },
         beforeFetch: () => {
           return myData.queryParams;
         },
-        afterFetch: (val) => {
-          const list = handleTree(val, 'deptId');
-          handleChildren(list);
-          return list;
-        },
       });
-
-      const [register1, { openModal: openModal1, setModalProps: setModalProps1 }] = useModal();
-
-      const handleEdit = (row: DeptModel) => {
-        if (row) {
-          setModalProps1({ title: '修改部门' });
-        } else {
-          row = {};
-          setModalProps1({ title: '添加部门' });
-        }
-        openModal1(true, row);
-      };
 
       const handleExport = () => {
         setLoading(true);
-        exportDept(myData.queryParams)
+        exportLog(myData.queryParams)
           .then((res) => {
             setLoading(false);
             download(res);
@@ -168,10 +149,10 @@
       const handleReload = () => {
         reload({ page: 1 });
       };
-      const handleDelete = (row: DeptModel) => {
-        setLoading(false);
-        const ids = row.deptId || getSelectRowKeys();
-        delDept(ids)
+      const handleDelete = (row: JobLogModel) => {
+        setLoading(true);
+        const ids = row.jobLogId || getSelectRowKeys();
+        delLog(ids)
           .then(() => {
             message.success('删除成功');
             reload();
@@ -189,14 +170,12 @@
         hasPermission,
         reload,
         handleExport,
-        handleEdit,
         handleDelete,
         handleReload,
         registerTable,
         ...toRefs(myData),
         resetQuery,
         filterOption,
-        register1,
       };
     },
   });

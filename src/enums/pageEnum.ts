@@ -13,4 +13,6 @@ export enum PageEnum {
   GEN_TABLE = '/tool/gen',
   // 字典数据
   DICT_DATA_TABLE = '/system/dict/',
+  // 任务调度
+  JOB_LOG_TABLE = '/monitor/jobLog/',
 }
