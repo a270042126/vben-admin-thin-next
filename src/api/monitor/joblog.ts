@@ -5,6 +5,7 @@ enum Api {
   list = '/monitor/jobLog/list',
   log = '/monitor/jobLog',
   export = '/monitor/jobLog/export',
+  clean = '/monitor/jobLog/clean',
 }
 // 查询定时任务调度日志列表
 export const getLogList = (params: BasicParams) => {
@@ -21,4 +22,8 @@ export const delLog = (id: any | any[]) => {
 // 导出定时任务调度日志
 export const exportLog = (params: BasicParams) => {
   return defHttp.get<string>({ url: Api.log + '/export', params });
+};
+
+export const clean = () => {
+  return defHttp.delete({ url: Api.clean });
 };

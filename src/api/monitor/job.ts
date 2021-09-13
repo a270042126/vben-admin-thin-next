@@ -5,6 +5,7 @@ enum Api {
   list = '/monitor/job/list',
   job = '/monitor/job',
   export = '/monitor/job/export',
+  run = '/monitor/job/run',
 }
 // 查询定时任务调度列表
 export const getJobList = (params: BasicParams) => {
@@ -29,4 +30,8 @@ export const delJob = (id: any | any[]) => {
 // 导出定时任务调度
 export const exportJob = (params: BasicParams) => {
   return defHttp.get<string>({ url: Api.job + '/export', params });
+};
+
+export const run = (data: JobModel) => {
+  return defHttp.put({ url: Api.run, data });
 };

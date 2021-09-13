@@ -49,7 +49,7 @@
   import { defineComponent, reactive, toRefs, ref } from 'vue';
   import { Form, Input, Textarea } from 'ant-design-vue';
   import { BasicModal, useModalInner } from '/@/components/Modal';
-  import { OperLogModel } from '/@/api/sys/model/operLogModel';
+  import { OperLogModel } from '/@/api/monitor/model/operLogModel';
   import { useSelect } from '/@/hooks/component/useSelect';
   import { getDicts } from '/@/api/sys/dict';
   import { DictDataModel } from '/@/api/sys/model/dictModel';

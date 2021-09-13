@@ -53,14 +53,6 @@
         <template #action="{ record }">
           <div>
             <a-button
-              v-if="hasPermission('monitor:job:query')"
-              type="link"
-              class="text-btn"
-              @click="handleLogShow(record)"
-            >
-              <Icon icon="ant-design:edit-filled" />调度日志
-            </a-button>
-            <a-button
               v-if="hasPermission('monitor:job:edit')"
               type="link"
               class="text-btn"
@@ -68,6 +60,31 @@
             >
               <Icon icon="ant-design:edit-filled" />编辑
             </a-button>
+            <a-button
+              v-if="hasPermission('monitor:job:query')"
+              type="link"
+              class="text-btn"
+              @click="handleLogShow(record)"
+            >
+              <Icon icon="ant-design:eye-filled" />调度日志
+            </a-button>
+            <a-button
+              v-if="hasPermission('monitor:job:query')"
+              type="link"
+              class="text-btn"
+              @click="handleDetailShow(record)"
+            >
+              <Icon icon="ant-design:eye-filled" />任务详情
+            </a-button>
+            <Popconfirm
+              v-if="hasPermission('monitor:job:changeStatus')"
+              title="您确定要立即执行一次"
+              @confirm="handleRun(record)"
+            >
+              <a-button type="link" class="text-btn">
+                <Icon icon="ant-design:thunderbolt-filled" />执行一次
+              </a-button>
+            </Popconfirm>
             <Popconfirm
               v-if="hasPermission('monitor:job:remove')"
               title="您确定删除吗"
@@ -82,6 +99,7 @@
       </BasicTable>
     </card>
     <AuData @register="register1" @onRefresh="reload" />
+    <JobDetail @register="register2" />
   </PageWrapper>
 </template>
 
@@ -95,11 +113,12 @@
   import AuData from './components/AuData.vue';
   import { useModal } from '/@/components/Modal';
   import { BasicData } from '/@/api/model/baseModel';
-  import { getJobList, delJob } from '/@/api/monitor/job';
+  import { getJobList, delJob, run } from '/@/api/monitor/job';
   import { JobModel } from '/@/api/monitor/model/jobModel';
   import { useSelect } from '/@/hooks/component/useSelect';
   import { useGo } from '/@/hooks/web/usePage';
   import { PageEnum } from '/@/enums/pageEnum';
+  import JobDetail from './components/JobDetail.vue';
 
   type DataModel = BasicData;
 
@@ -117,6 +136,7 @@
       Select,
       SelectOption,
       AuData,
+      JobDetail,
     },
     setup() {
       const { hasPermission } = usePermission();
@@ -138,7 +158,7 @@
           },
           width: 110,
         },
-        { title: '操作', dataIndex: 'action', slots: { customRender: 'action' }, width: 250 },
+        { title: '操作', dataIndex: 'action', slots: { customRender: 'action' }, width: 400 },
       ];
 
       const [registerTable, { reload, getSelectRowKeys, setLoading }] = useTable({
@@ -190,6 +210,23 @@
         go(`${PageEnum.JOB_LOG_TABLE}${row.jobId}`);
       };
 
+      const handleRun = (row: JobModel) => {
+        setLoading(true);
+        run(row)
+          .then(() => {
+            message.success('执行成功');
+            reload();
+          })
+          .catch(() => {
+            setLoading(false);
+          });
+      };
+
+      const [register2, { openModal: openModal2 }] = useModal();
+      const handleDetailShow = (row: JobModel) => {
+        openModal2(true, row);
+      };
+
       const { filterOption } = useSelect();
       return {
         hasPermission,
@@ -203,6 +240,9 @@
         filterOption,
         register1,
         handleLogShow,
+        handleRun,
+        handleDetailShow,
+        register2,
       };
     },
   });

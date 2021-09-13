@@ -40,6 +40,15 @@
         >
           <a-button type="primary" danger><Icon icon="ic:outline-delete-outline" />删除</a-button>
         </Popconfirm>
+        <Popconfirm
+          v-if="hasPermission('monitor:log:remove')"
+          title="您确定要清空吗"
+          @confirm="handleClean"
+        >
+          <a-button type="primary" danger class="ml-4"
+            ><Icon icon="ic:outline-delete-outline" />清空</a-button
+          >
+        </Popconfirm>
         <a-button
           v-if="hasPermission('monitor:log:export')"
           type="primary"
@@ -52,19 +61,19 @@
       <BasicTable @register="registerTable">
         <template #action="{ record }">
           <div>
-            <Popconfirm
-              v-if="hasPermission('monitor:log:remove')"
-              title="您确定删除吗"
-              @confirm="handleDelete(record)"
+            <a-button
+              v-if="hasPermission('monitor:job:query')"
+              type="link"
+              class="text-btn"
+              @click="handleDetailShow(record)"
             >
-              <a-button type="link" danger class="text-btn">
-                <Icon icon="ic:outline-delete-outline" />删除
-              </a-button>
-            </Popconfirm>
+              <Icon icon="ant-design:eye-filled" />详情
+            </a-button>
           </div>
         </template>
       </BasicTable>
     </card>
+    <LogDetail @register="register1" />
   </PageWrapper>
 </template>
 
@@ -76,10 +85,12 @@
   import { BasicTable, BasicColumn, useTable } from '/@/components/Table';
   import { Icon } from '/@/components/Icon';
   import { BasicData } from '/@/api/model/baseModel';
-  import { getLogList, delLog, exportLog } from '/@/api/monitor/jobLog';
+  import { getLogList, delLog, exportLog, clean } from '/@/api/monitor/jobLog';
   import { JobLogModel } from '/@/api/monitor/model/jobLogModel';
   import { useSelect } from '/@/hooks/component/useSelect';
   import { download } from '/@/utils';
+  import { useModal } from '/@/components/Modal';
+  import LogDetail from './components/LogDetail.vue';
 
   type DataModel = BasicData;
 
@@ -96,6 +107,7 @@
       Popconfirm,
       Select,
       SelectOption,
+      LogDetail,
     },
     setup() {
       const { hasPermission } = usePermission();
@@ -117,7 +129,6 @@
           },
           width: 110,
         },
-        { title: '异常信息', dataIndex: 'exceptionInfo', width: 110 },
         { title: '执行时间', dataIndex: 'createTime', width: 200 },
         { title: '操作', dataIndex: 'action', slots: { customRender: 'action' }, width: 250 },
       ];
@@ -165,6 +176,24 @@
         myData.queryParams = {};
         handleReload();
       };
+
+      const [register1, { openModal: openModal1 }] = useModal();
+      const handleDetailShow = (row: JobLogModel) => {
+        openModal1(true, row);
+      };
+
+      const handleClean = () => {
+        setLoading(true);
+        clean()
+          .then(() => {
+            message.success('清空成功');
+            reload();
+          })
+          .catch(() => {
+            setLoading(false);
+          });
+      };
+
       const { filterOption } = useSelect();
       return {
         hasPermission,
@@ -176,6 +205,9 @@
         ...toRefs(myData),
         resetQuery,
         filterOption,
+        handleDetailShow,
+        register1,
+        handleClean,
       };
     },
   });
