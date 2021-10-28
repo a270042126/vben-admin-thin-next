@@ -45,7 +45,7 @@ export function deepMerge<T = any>(src: any = {}, target: any = {}): T {
 
 export function openWindow(
   url: string,
-  opt?: { target?: TargetContext | string; noopener?: boolean; noreferrer?: boolean }
+  opt?: { target?: TargetContext | string; noopener?: boolean; noreferrer?: boolean },
 ) {
   const { target = '__blank', noopener = true, noreferrer = true } = opt || {};
   const feature: string[] = [];
@@ -195,7 +195,7 @@ export function handleTree(data: Recordable[], id: any, parentId?: any, rootId?:
       Math,
       data.map((item) => {
         return item[parentId];
-      })
+      }),
     ) ||
     0;
   // 对源数据深度克隆

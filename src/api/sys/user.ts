@@ -35,7 +35,7 @@ export function loginApi(params: LoginParams, mode: ErrorMessageMode = 'modal') 
     {
       isNotData: true,
       errorMessageMode: mode,
-    }
+    },
   );
 }
 
@@ -43,7 +43,10 @@ export function loginApi(params: LoginParams, mode: ErrorMessageMode = 'modal') 
  * @description: getUserInfo
  */
 export function getUserInfo() {
-  return defHttp.get<GetUserInfoModel>({ url: Api.GetUserInfo }, { isNotData: true });
+  return defHttp.get<GetUserInfoModel>(
+    { url: Api.GetUserInfo },
+    { isNotData: true, errorMessageMode: 'none' },
+  );
 }
 
 export function getPermCode() {

@@ -15,6 +15,7 @@ import { setObjToUrlParams, deepMerge } from '/@/utils';
 import { useErrorLogStoreWithOut } from '/@/store/modules/errorLog';
 import { useI18n } from '/@/hooks/web/useI18n';
 import { joinTimestamp, formatRequestDate } from './helper';
+import { useUserStoreWithOut } from '/@/store/modules/user';
 
 const globSetting = useGlobSetting();
 const urlPrefix = globSetting.urlPrefix;
@@ -58,7 +59,9 @@ const transform: AxiosTransform = {
     switch (code) {
       case ResultEnum.TIMEOUT:
         timeoutMsg = t('sys.api.timeoutMessage');
-        checkStatus(code, timeoutMsg, 'none');
+        const userStore = useUserStoreWithOut();
+        userStore.setToken(undefined);
+        userStore.logout(true);
         break;
       default:
         if (msg) {
@@ -79,7 +82,7 @@ const transform: AxiosTransform = {
 
   // 请求之前处理config
   beforeRequestHook: (config, options) => {
-    const { apiUrl, joinPrefix, joinParamsToUrl, formatDate, joinTime = true } = options;
+    const { apiUrl, joinPrefix, joinParamsToUrl, formatDate, joinTime = true, urlPrefix } = options;
 
     if (joinPrefix) {
       config.url = `${urlPrefix}${config.url}`;
@@ -134,7 +137,7 @@ const transform: AxiosTransform = {
         if (joinParamsToUrl) {
           config.url = setObjToUrlParams(
             config.url as string,
-            Object.assign({}, config.params, config.data)
+            Object.assign({}, config.params, config.data),
           );
         }
       } else {
@@ -154,7 +157,7 @@ const transform: AxiosTransform = {
     const token = getToken();
     if (token && (config as Recordable)?.requestOptions?.withToken !== false) {
       // jwt token
-      config.headers.Authorization = options.authenticationScheme
+      (config as Recordable).headers.Authorization = options.authenticationScheme
         ? `${options.authenticationScheme} ${token}`
         : token;
     }
@@ -198,7 +201,7 @@ const transform: AxiosTransform = {
         return Promise.reject(error);
       }
     } catch (error) {
-      throw new Error(error);
+      throw new Error(error as unknown as string);
     }
 
     checkStatus(error?.response?.status, msg, errorMessageMode);
@@ -217,8 +220,7 @@ function createAxios(opt?: Partial<CreateAxiosOptions>) {
         timeout: 10 * 1000,
         // 基础接口地址
         // baseURL: globSetting.apiUrl,
-        // 接口可能会有通用的地址部分，可以统一抽取出来
-        urlPrefix: urlPrefix,
+
         headers: { 'Content-Type': ContentTypeEnum.JSON },
         // 如果是form-data格式
         // headers: { 'Content-Type': ContentTypeEnum.FORM_URLENCODED },
@@ -240,6 +242,8 @@ function createAxios(opt?: Partial<CreateAxiosOptions>) {
           errorMessageMode: 'message',
           // 接口地址
           apiUrl: globSetting.apiUrl,
+          // 接口拼接地址
+          urlPrefix: urlPrefix,
           //  是否加入时间戳
           joinTime: true,
           // 忽略重复请求
@@ -248,8 +252,8 @@ function createAxios(opt?: Partial<CreateAxiosOptions>) {
           withToken: true,
         },
       },
-      opt || {}
-    )
+      opt || {},
+    ),
   );
 }
 export const defHttp = createAxios();
@@ -258,5 +262,6 @@ export const defHttp = createAxios();
 // export const otherHttp = createAxios({
 //   requestOptions: {
 //     apiUrl: 'xxx',
+//     urlPrefix: 'xxx',
 //   },
 // });
